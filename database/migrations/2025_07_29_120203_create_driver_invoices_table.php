@@ -29,6 +29,7 @@ return new class extends Migration
             $table->enum('platform', ['uber', 'bolt', 'bliq', 'freenow', 'other']);
             $table->decimal('gross', 10)->default(0);
             $table->decimal('tip', 10)->default(0);
+            $table->decimal('bar', 10)->default(0);
             $table->decimal('cash', 10)->default(0);
             $table->decimal('net', 10)->default(0);
             $table->decimal('commission', 10)->default(0);

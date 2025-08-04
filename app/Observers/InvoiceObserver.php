@@ -9,7 +9,7 @@ class InvoiceObserver
 {
     public function created(Invoice $invoice): void
     {
-        $platforms = ['uber', 'bolt', 'bliq', 'freenow', 'other'];
+        $platforms = ['uber', 'bolt', 'bliq', 'freenow'];
 
         foreach ($platforms as $platform) {
             InvoiceDetail::create([

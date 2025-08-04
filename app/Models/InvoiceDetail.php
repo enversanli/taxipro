@@ -14,6 +14,7 @@ class InvoiceDetail extends Model
         'tip',
         'cash',
         'net',
+        'bar',
         'date',
     ];
 }

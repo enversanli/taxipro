@@ -23,11 +23,13 @@ return [
     'color' => 'Color',
 
     'tip' => 'Tip',
+    'bar' => 'Bar',
     'net' => 'Net',
     'gross' => 'Gross',
     'cash' => 'Cash',
     'platform' => 'Platform',
     'total_income' => 'Total Income',
+    'total_gross' => 'Gross',
     'address' => 'Address',
     'phone' => 'Phone',
 

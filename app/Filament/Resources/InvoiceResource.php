@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Models\Invoice;
+use Doctrine\DBAL\Logging\Driver;
 use Filament\Forms\Components\BelongsToSelect;
 use Filament\Forms\Components\HasManyRepeater;
 use Filament\Forms\Components\Section;
@@ -82,30 +83,27 @@ class InvoiceResource extends Resource
                     ->label('Total Gross')
                     ->view('filament.fields.total-gross', function (Get $get) {
                         return [
-                            'value' => (float) $get('total_gross') ?? 0,
-                            'tip' => (float) $get('tip') ?? 0,
-                            'cash' => (float) $get('cash') ?? 0,
-                            'net' => (float) $get('net') ?? 0,
+                            'items' => [
+                                ['total_gross', (float) $get('total_gross') ?? 0],
+                                ['bar', (float) $get('bar') ?? 0],
+                                ['tip', (float) $get('tip') ?? 0],
+                                ['cash', (float) $get('cash') ?? 0],
+                                ['net', (float) $get('net') ?? 0],
+                            ],
+                            'platforms' => $get('platforms' ?? (object)[]),
+                            'title' => 'Platform Calculations'
                         ];
                     })
                     ->reactive()
-                    ->columnSpan('full'),  // <-- make full width
+                    ->columnSpan('full'),
+
 
 
                 Section::make()
                     ->schema([
-                        HasManyRepeater::make('details') // lowercase relation name is typical
-                        ->afterStateUpdated(function (?array $state, Set $set) {
-                            $totalGross = collect($state)->sum(fn ($item) => (float) ($item['gross'] ?? 0));
-                            $tip = collect($state)->sum(fn ($item) => (float) ($item['tip'] ?? 0));
-                            $cash = collect($state)->sum(fn ($item) => (float) ($item['cash'] ?? 0));
-                            $net = collect($state)->sum(fn ($item) => (float) ($item['net'] ?? 0));
-
-                            $set('total_gross', $totalGross);
-                            $set('tip', $tip);
-                            $set('cash', $cash);
-                            $set('net', $net);
-                        })
+                        HasManyRepeater::make('details')
+                            ->afterStateUpdated(fn (?array $state, Set $set) => self::calculatePlatformMetrics($state, $set))
+                            ->afterStateHydrated(fn (?array $state, Set $set) => self::calculatePlatformMetrics($state, $set))
                             ->reactive()
                             ->collapsed()
                             ->itemLabel(fn (array $state): ?string => strtoupper($state['platform'] ?? '') ?: 'Detail')
@@ -143,8 +141,8 @@ class InvoiceResource extends Resource
                                     ->step(0.01)
                                     ->columnSpan(1),
 
-                                TextInput::make('cash')
-                                    ->label('Cash')
+                                TextInput::make('bar')
+                                    ->label('Bar')
                                     ->numeric()
                                     ->default(0)
                                     ->prefix('€')
@@ -211,4 +209,48 @@ class InvoiceResource extends Resource
             'edit' => Pages\EditDriverInvoice::route('/{record}/edit'),
         ];
     }
+
+    protected static function calculatePlatformMetrics(?array $state, Set $set): void
+    {
+        $commission = config('platform');
+
+        $totalGross = collect($state)->sum(fn ($item) => (float) ($item['gross'] ?? 0));
+        $tip        = collect($state)->sum(fn ($item) => (float) ($item['tip'] ?? 0));
+        $bar        = collect($state)->sum(fn ($item) => (float) ($item['bar'] ?? 0));
+
+        $cash = collect($state)->sum(function ($item) {
+            $gross = (float) ($item['gross'] ?? 0);
+            $bar   = (float) ($item['bar'] ?? 0);
+            return $gross - $bar;
+        });
+
+        $net = collect($state)->sum(function ($item) use ($commission) {
+            $gross = (float) ($item['gross'] ?? 0);
+            $commissionRate = (float) ($commission[$item['platform']]['commission'] ?? 0);
+            return $gross * (1 - $commissionRate);
+        });
+
+        $platforms = collect($state)
+            ->groupBy('platform')
+            ->map(function ($items, $platform) use ($commission) {
+                $gross = $items->sum(fn ($item) => (float) ($item['gross'] ?? 0));
+                $tip   = $items->sum(fn ($item) => (float) ($item['tip'] ?? 0));
+                $bar   = $items->sum(fn ($item) => (float) ($item['bar'] ?? 0));
+
+                $commissionRate = (float) ($commission[$platform]['commission'] ?? 0);
+                $cash = $gross - $tip - $bar;
+                $net  = $gross * (1 - $commissionRate);
+
+                return compact('gross', 'tip', 'bar', 'cash', 'net');
+            })
+            ->toArray();
+
+        $set('total_gross', $totalGross);
+        $set('tip', $tip);
+        $set('bar', $bar);
+        $set('cash', $cash);
+        $set('net', $net);
+        $set('platforms', $platforms);
+    }
+
 }
