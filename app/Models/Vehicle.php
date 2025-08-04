@@ -16,6 +16,7 @@ class Vehicle extends Model
         'color',
         'brand',
         'tüv_date',
+        'insurance_date',
         'code',
     ];
 

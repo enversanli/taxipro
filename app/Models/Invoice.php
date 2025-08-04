@@ -16,6 +16,11 @@ class Invoice extends Model
         'month',
         'year',
         'total_income',
+        'total_gross',
+        'tip',
+        'bar',
+        'net',
+        'driver_salary'
     ];
 
     public function driver()
@@ -24,7 +29,7 @@ class Invoice extends Model
     }
 
     public function vehicle(){
-        return $this->hasOne(Vehicle::class);
+        return $this->belongsTo(Vehicle::class);
     }
 
     public function details(): HasMany{

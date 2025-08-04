@@ -18,6 +18,12 @@ return new class extends Migration
             $table->year('year')->default(now()->format('Y'));
             $table->string('month')->default(now()->format('m'));
             $table->decimal('total_income', 10)->default(0);
+            $table->decimal('total_gross', 10)->default(0);
+            $table->decimal('bar', 10)->default(0);
+            $table->decimal('tip', 10)->default(0);
+            $table->decimal('net', 10)->default(0);
+            $table->decimal('cash', 10)->default(0);
+            $table->decimal('driver_salary', 10)->default(0);
             $table->timestamps();
 
             $table->unique(['driver_id', 'vehicle_id', 'year', 'month']);

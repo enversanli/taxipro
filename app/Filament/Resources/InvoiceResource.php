@@ -4,9 +4,11 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Models\Invoice;
+use App\Services\InvoiceExportService;
 use Doctrine\DBAL\Logging\Driver;
 use Filament\Forms\Components\BelongsToSelect;
 use Filament\Forms\Components\HasManyRepeater;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -78,17 +80,21 @@ class InvoiceResource extends Resource
                         'default' => 1,
                         'md' => 1,
                     ]),
-
+                Hidden::make('total_gross'),
+                Hidden::make('bar'),
+                Hidden::make('tip'),
+                Hidden::make('cash'),
+                Hidden::make('net'),
                 ViewField::make('test')
                     ->label('Total Gross')
                     ->view('filament.fields.total-gross', function (Get $get) {
                         return [
                             'items' => [
-                                ['total_gross', (float) $get('total_gross') ?? 0],
-                                ['bar', (float) $get('bar') ?? 0],
-                                ['tip', (float) $get('tip') ?? 0],
-                                ['cash', (float) $get('cash') ?? 0],
-                                ['net', (float) $get('net') ?? 0],
+                                ['total_gross', (float) $get('total_gross') ?? $get('model.total_gross')],
+                                ['bar', (float) $get('bar') ?? $get('model.bar')],
+                                ['tip', (float) $get('tip') ?? $get('model.tip')],
+                                ['cash', (float) $get('cash') ?? $get('model.cash')],
+                                ['net', (float) $get('net') ?? $get('model.net')],
                             ],
                             'platforms' => $get('platforms' ?? (object)[]),
                             'title' => 'Platform Calculations'
@@ -186,6 +192,16 @@ class InvoiceResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\Action::make('export')
+                    ->label('Export')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        $service = app(InvoiceExportService::class);
+                        return $service->exportSingle($record->id);
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -33,6 +33,7 @@ return new class extends Migration
             $table->string('color')->nullable();
             $table->string('code')->nullable();
             $table->date('tüv_date')->nullable();
+            $table->date('insurance_date')->nullable();
             $table->timestamps();
 
             $table->unique(['company_id', 'license_plate', 'code']);
