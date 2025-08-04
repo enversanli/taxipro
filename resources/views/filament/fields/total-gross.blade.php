@@ -24,7 +24,7 @@
         </h4>
 
         <div class="flex flex-wrap justify-center gap-6 text-center">
-            @foreach ($platforms as $platform => $values)
+            @foreach ($details as $platform => $values)
                 <div class="w-56 p-4 rounded-xl shadow bg-primary-50 text-primary-900 border border-primary-200">
                     <h5 class="text-lg font-semibold mb-2">
                         {{ ucfirst($platform) }}

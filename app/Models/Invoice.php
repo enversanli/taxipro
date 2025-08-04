@@ -16,10 +16,11 @@ class Invoice extends Model
         'month',
         'year',
         'total_income',
-        'total_gross',
+        'gross',
         'tip',
         'bar',
         'net',
+        'cash',
         'driver_salary'
     ];
 

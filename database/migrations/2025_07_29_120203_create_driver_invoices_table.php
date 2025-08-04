@@ -18,7 +18,7 @@ return new class extends Migration
             $table->year('year')->default(now()->format('Y'));
             $table->string('month')->default(now()->format('m'));
             $table->decimal('total_income', 10)->default(0);
-            $table->decimal('total_gross', 10)->default(0);
+            $table->decimal('gross', 10)->default(0);
             $table->decimal('bar', 10)->default(0);
             $table->decimal('tip', 10)->default(0);
             $table->decimal('net', 10)->default(0);

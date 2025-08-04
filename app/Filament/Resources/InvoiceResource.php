@@ -80,7 +80,8 @@ class InvoiceResource extends Resource
                         'default' => 1,
                         'md' => 1,
                     ]),
-                Hidden::make('total_gross'),
+
+                Hidden::make('gross'),
                 Hidden::make('bar'),
                 Hidden::make('tip'),
                 Hidden::make('cash'),
@@ -90,13 +91,13 @@ class InvoiceResource extends Resource
                     ->view('filament.fields.total-gross', function (Get $get) {
                         return [
                             'items' => [
-                                ['total_gross', (float) $get('total_gross') ?? $get('model.total_gross')],
+                                ['gross', (float) $get('gross') ?? $get('model.gross')],
                                 ['bar', (float) $get('bar') ?? $get('model.bar')],
                                 ['tip', (float) $get('tip') ?? $get('model.tip')],
                                 ['cash', (float) $get('cash') ?? $get('model.cash')],
                                 ['net', (float) $get('net') ?? $get('model.net')],
                             ],
-                            'platforms' => $get('platforms' ?? (object)[]),
+                            'details' => $get('details' ?? (object)[]),
                             'title' => 'Platform Calculations'
                         ];
                     })
@@ -246,7 +247,7 @@ class InvoiceResource extends Resource
             return $gross * (1 - $commissionRate);
         });
 
-        $platforms = collect($state)
+        $details = collect($state)
             ->groupBy('platform')
             ->map(function ($items, $platform) use ($commission) {
                 $gross = $items->sum(fn ($item) => (float) ($item['gross'] ?? 0));
@@ -261,12 +262,12 @@ class InvoiceResource extends Resource
             })
             ->toArray();
 
-        $set('total_gross', $totalGross);
+        $set('gross', $totalGross);
         $set('tip', $tip);
         $set('bar', $bar);
         $set('cash', $cash);
         $set('net', $net);
-        $set('platforms', $platforms);
+        $set('details', $details);
     }
 
 }
