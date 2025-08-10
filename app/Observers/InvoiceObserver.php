@@ -4,7 +4,6 @@ namespace App\Observers;
 
 use App\Models\Invoice;
 use App\Models\InvoiceDetail;
-use Illuminate\Support\Facades\Auth;
 
 class InvoiceObserver
 {

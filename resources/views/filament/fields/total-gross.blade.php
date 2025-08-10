@@ -33,6 +33,7 @@
                     </h5>
                     <ul class="text-sm space-y-1">
                         <li><strong>Gross:</strong> €{{ number_format($values['gross'], 2) }}</li>
+                        <li><strong>Bar:</strong> €{{ number_format($values['bar'], 2) }}</li>
                         <li><strong>Tip:</strong> €{{ number_format($values['tip'], 2) }}</li>
                         <li><strong>Cash:</strong> €{{ number_format($values['cash'], 2) }}</li>
                         <li><strong>Net:</strong> €{{ number_format($values['net'], 2) }}</li>
