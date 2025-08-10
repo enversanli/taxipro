@@ -41,7 +41,6 @@ class UserResource extends Resource
                         'partner' => 'Partner',
                         'driver' => 'Driver',
                     ])
-                    ->required()
                     ->label('Role'),
 
                 TextInput::make('first_name')

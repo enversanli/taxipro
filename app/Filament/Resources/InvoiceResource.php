@@ -4,9 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Models\Invoice;
+use Facades\App\Services\InvoiceDetailService;
 use App\Services\InvoiceExportService;
-use Doctrine\DBAL\Logging\Driver;
-use Filament\Forms\Components\BelongsToSelect;
 use Filament\Forms\Components\HasManyRepeater;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section;
@@ -86,6 +85,8 @@ class InvoiceResource extends Resource
                 Hidden::make('tip'),
                 Hidden::make('cash'),
                 Hidden::make('net'),
+                Hidden::make('driver_salary'),
+
                 ViewField::make('test')
                     ->label('Total Gross')
                     ->view('filament.fields.total-gross', function (Get $get) {
@@ -96,6 +97,7 @@ class InvoiceResource extends Resource
                                 ['tip', (float) $get('tip') ?? $get('model.tip')],
                                 ['cash', (float) $get('cash') ?? $get('model.cash')],
                                 ['net', (float) $get('net') ?? $get('model.net')],
+                                ['driver_salary', (float) $get('driver_salary') ?? $get('model.driver_salary')],
                             ],
                             'details' => $get('details' ?? (object)[]),
                             'title' => 'Platform Calculations'
@@ -155,6 +157,7 @@ class InvoiceResource extends Resource
                                     ->prefix('€')
                                     ->step(0.01)
                                     ->columnSpan(1),
+                                Hidden::make('cash'),
 
                                 TextInput::make('net')
                                     ->label('Net')
@@ -229,45 +232,16 @@ class InvoiceResource extends Resource
 
     protected static function calculatePlatformMetrics(?array $state, Set $set): void
     {
-        $commission = config('platform');
+        $mainInvoice = InvoiceDetailService::calculateMain($state);
+        $detailInvoice = InvoiceDetailService::calculateDetail($state);
 
-        $totalGross = collect($state)->sum(fn ($item) => (float) ($item['gross'] ?? 0));
-        $tip        = collect($state)->sum(fn ($item) => (float) ($item['tip'] ?? 0));
-        $bar        = collect($state)->sum(fn ($item) => (float) ($item['bar'] ?? 0));
-
-        $cash = collect($state)->sum(function ($item) {
-            $gross = (float) ($item['gross'] ?? 0);
-            $bar   = (float) ($item['bar'] ?? 0);
-            return $gross - $bar;
-        });
-
-        $net = collect($state)->sum(function ($item) use ($commission) {
-            $gross = (float) ($item['gross'] ?? 0);
-            $commissionRate = (float) ($commission[$item['platform']]['commission'] ?? 0);
-            return $gross * (1 - $commissionRate);
-        });
-
-        $details = collect($state)
-            ->groupBy('platform')
-            ->map(function ($items, $platform) use ($commission) {
-                $gross = $items->sum(fn ($item) => (float) ($item['gross'] ?? 0));
-                $tip   = $items->sum(fn ($item) => (float) ($item['tip'] ?? 0));
-                $bar   = $items->sum(fn ($item) => (float) ($item['bar'] ?? 0));
-
-                $commissionRate = (float) ($commission[$platform]['commission'] ?? 0);
-                $cash = $gross - $tip - $bar;
-                $net  = $gross * (1 - $commissionRate);
-
-                return compact('gross', 'tip', 'bar', 'cash', 'net');
-            })
-            ->toArray();
-
-        $set('gross', $totalGross);
-        $set('tip', $tip);
-        $set('bar', $bar);
-        $set('cash', $cash);
-        $set('net', $net);
-        $set('details', $details);
+        $set('gross', $mainInvoice['totalGross']);
+        $set('tip', $mainInvoice['tip']);
+        $set('bar', $mainInvoice['bar']);
+        $set('cash', $mainInvoice['cash']);
+        $set('net', $mainInvoice['net']);
+        $set('driver_salary', $mainInvoice['driverSalary']);
+        $set('details', $detailInvoice);
     }
 
 }

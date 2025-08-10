@@ -17,7 +17,8 @@
 </div>
 
 {{-- Platform-specific stats --}}
-@if (!empty($platforms))
+@if (!empty($details))
+
     <div class="mt-10">
         <h4 class="mb-4 text-center text-xl font-semibold text-gray-700">
             Platform Breakdown
@@ -25,9 +26,10 @@
 
         <div class="flex flex-wrap justify-center gap-6 text-center">
             @foreach ($details as $platform => $values)
+
                 <div class="w-56 p-4 rounded-xl shadow bg-primary-50 text-primary-900 border border-primary-200">
                     <h5 class="text-lg font-semibold mb-2">
-                        {{ ucfirst($platform) }}
+                        {{ isset($values['platform']) ? ucfirst($values['platform']) : ucfirst($platform) }}
                     </h5>
                     <ul class="text-sm space-y-1">
                         <li><strong>Gross:</strong> €{{ number_format($values['gross'], 2) }}</li>

@@ -30,6 +30,7 @@ return [
     'platform' => 'Platform',
     'total_income' => 'Total Income',
     'total_gross' => 'Gross',
+    'driver_salary' => 'Driver Salary',
     'address' => 'Address',
     'phone' => 'Phone',
 
