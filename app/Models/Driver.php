@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
+use App\Traits\CommonTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Auth;
 
 class Driver extends Model
 {
+    use CommonTrait;
+
     protected $fillable = [
         'company_id',
         'first_name',
@@ -33,14 +34,5 @@ class Driver extends Model
     public function getFullNameAttribute()
     {
         return "{$this->first_name} {$this->last_name}";
-    }
-
-    protected static function booted()
-    {
-        static::addGlobalScope('userCompany', function (Builder $builder) {
-            if (Auth::user()->isAdmin) {
-                $builder->where('id', $user->company_id);
-            }
-        });
     }
 }

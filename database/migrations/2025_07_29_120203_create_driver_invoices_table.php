@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('company_id')->constrained('drivers')->cascadeOnDelete();
             $table->foreignId('driver_id')->constrained('drivers')->cascadeOnDelete();
             $table->foreignId('vehicle_id')->constrained('vehicles')->cascadeOnDelete();
             $table->year('year')->default(now()->format('Y'));
@@ -26,7 +27,7 @@ return new class extends Migration
             $table->decimal('driver_salary', 10)->default(0);
             $table->timestamps();
 
-            $table->unique(['driver_id', 'vehicle_id', 'year', 'month']);
+            $table->unique(['company_id', 'driver_id', 'vehicle_id', 'year', 'month']);
         });
 
         Schema::create('invoice_details', function (Blueprint $table){

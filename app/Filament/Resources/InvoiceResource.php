@@ -3,8 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\InvoiceResource\Pages;
+use App\Models\Company;
 use App\Models\Invoice;
-use Facades\App\Services\InvoiceDetailService;
+use Facades\App\Services\InvoiceCalculateService;
 use App\Services\InvoiceExportService;
 use Filament\Forms\Components\HasManyRepeater;
 use Filament\Forms\Components\Hidden;
@@ -33,6 +34,14 @@ class InvoiceResource extends Resource
     {
         return $form
             ->schema([
+                auth()->user()->role === 'admin'
+                    ? Select::make('company_id')
+                    ->label('Company')
+                    ->options(Company::all()->pluck('name', 'id'))
+                    ->searchable()
+                    ->required()
+                    : Hidden::make('company_id')
+                    ->default(auth()->user()->company_id),
                 Select::make('driver_id')
                     ->label(__('common.driver'))
                     ->relationship(
@@ -232,8 +241,8 @@ class InvoiceResource extends Resource
 
     protected static function calculatePlatformMetrics(?array $state, Set $set): void
     {
-        $mainInvoice = InvoiceDetailService::calculateMain($state);
-        $detailInvoice = InvoiceDetailService::calculateDetail($state);
+        $mainInvoice = InvoiceCalculateService::calculateMain($state);
+        $detailInvoice = InvoiceCalculateService::calculateDetail($state);
 
         $set('gross', $mainInvoice['totalGross']);
         $set('tip', $mainInvoice['tip']);

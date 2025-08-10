@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\CommonTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Vehicle extends Model
 {
+    use CommonTrait;
+
     protected $fillable = [
         'company_id',
         'license_plate',

@@ -15,7 +15,6 @@ use Filament\Tables\Table;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\MultiSelect;
-use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
 
 class DriverResource extends Resource
