@@ -135,8 +135,7 @@ class InvoiceResource extends Resource
                                         'uber' => 'Uber',
                                         'bolt' => 'Bolt',
                                         'bliq' => 'Bliq',
-                                        'freenow' => 'Free Now',
-                                        'other' => 'Other',
+                                        'freenow' => 'Free Now'
                                     ])
                                     ->required()
                                     ->searchable()

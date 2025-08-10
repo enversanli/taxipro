@@ -26,8 +26,7 @@ class DetailsRelationManager extends RelationManager
                         'uber' => 'Uber',
                         'bolt' => 'Bolt',
                         'bliq' => 'Bliq',
-                        'freenow' => 'Free Now',
-                        'other' => 'Other',
+                        'freenow' => 'Free Now'
                     ])
                     ->required(),
                 TextInput::make('gross')->numeric()->required(),

@@ -33,7 +33,7 @@ return new class extends Migration
         Schema::create('invoice_details', function (Blueprint $table){
             $table->id();
             $table->foreignId('invoice_id')->constrained('invoices')->cascadeOnDelete();
-            $table->enum('platform', ['uber', 'bolt', 'bliq', 'freenow', 'other']);
+            $table->enum('platform', ['uber', 'bolt', 'bliq', 'freenow']);
             $table->decimal('gross', 10)->default(0);
             $table->decimal('tip', 10)->default(0);
             $table->decimal('bar', 10)->default(0);

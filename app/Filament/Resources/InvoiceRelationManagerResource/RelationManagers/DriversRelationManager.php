@@ -23,8 +23,7 @@ class DriversRelationManager extends RelationManager
                         'uber' => 'Uber',
                         'bolt' => 'Bolt',
                         'bliq' => 'Bliq',
-                        'freenow' => 'FreeNow',
-                        'other' => 'Other',
+                        'freenow' => 'FreeNow'
                     ])
                     ->required(),
 
