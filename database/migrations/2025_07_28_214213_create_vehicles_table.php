@@ -32,7 +32,7 @@ return new class extends Migration
             $table->enum('usage_type', ['taxi', 'rent']);
             $table->string('color')->nullable();
             $table->string('code')->nullable();
-            $table->date('tüv_date')->nullable();
+            $table->date('tuv_date')->nullable();
             $table->date('insurance_date')->nullable();
             $table->timestamps();
 

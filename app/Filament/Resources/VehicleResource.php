@@ -81,7 +81,7 @@ class VehicleResource extends Resource
                     ->required()
                     ->maxLength(255),
 
-                Forms\Components\DatePicker::make('tüv_date')
+                Forms\Components\DatePicker::make('tuv_date')
                 ->label('TÜV Date'),
 
                 Forms\Components\DatePicker::make('insurance_date')
