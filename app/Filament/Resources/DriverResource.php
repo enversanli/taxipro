@@ -85,10 +85,6 @@ class DriverResource extends Resource
                         'rent' => 'warning',
                     }),
 
-                TextColumn::make('provision_model')
-                    ->label('Provision Model')
-                    ->limit(20),
-
                 TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime('d.m.Y H:i')

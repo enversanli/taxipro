@@ -20,7 +20,7 @@ class TuvInfoOverview extends BaseWidget
                         $query->whereNotNull('tuv_date');
                     })
                     ->orderBy('tuv_date', 'ASC')
-                    ->take(3)
+                    ->limit(3)
             )
             ->columns([
                 Tables\Columns\TextColumn::make('license_plate')
