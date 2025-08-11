@@ -16,4 +16,12 @@ class ListDriverInvoices extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            InvoiceResource\Widgets\MonthlyInvoiceChart::class,
+            InvoiceResource\Widgets\MonthlyPlatformInvoiceChart::class,
+        ];
+    }
 }

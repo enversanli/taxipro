@@ -23,4 +23,9 @@ class Company extends Model
     {
         return $this->belongsTo(\App\Models\User::class, 'owner_id');
     }
+
+    public function vehicles()
+    {
+        return $this->hasMany(Vehicle::class);
+    }
 }
