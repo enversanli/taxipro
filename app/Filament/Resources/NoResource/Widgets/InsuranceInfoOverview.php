@@ -28,12 +28,12 @@ class InsuranceInfoOverview extends BaseWidget
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('insurance_date')
-                    ->label('TÜV Date')
+                    ->label('Insurance Date')
                     ->date('d M Y')
                     ->color('success'),
 
                 Tables\Columns\TextColumn::make('upcoming_insurance_date')
-                    ->label('Upcoming TÜV Date')
+                    ->label('Upcoming Insurance Date')
                     ->date('d M Y')
                     ->color('danger'),
 

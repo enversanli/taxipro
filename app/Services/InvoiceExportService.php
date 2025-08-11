@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Invoice;
+use Illuminate\Support\Str;
 
 class InvoiceExportService
 {
@@ -14,10 +15,10 @@ class InvoiceExportService
 
     public function exportSingle(int $invoiceId){
         $invoice = Invoice::with(['driver', 'vehicle', 'details'])->findOrFail($invoiceId);
-
+        $fileName = Str::slug($invoice->driver->full_name . ' ' . $invoice->month . ' ' . $invoice->year) . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="drivers.csv"',
+            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
         ];
 
         return response()->stream(function () use ($invoice) {
@@ -37,6 +38,7 @@ class InvoiceExportService
                 $invoice->details->where('platform', 'bolt')->sum('gross'),
                 $invoice->details->where('platform', 'freenow')->sum('gross'),
                 $invoice->details->where('platform', 'bliq')->sum('gross'),
+                $invoice->driver_salary
                 ]);
 
             fclose($handle);

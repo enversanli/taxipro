@@ -1,8 +1,18 @@
+
 <h3 class="mb-6 text-center text-2xl font-bold text-gray-800">
     {{ $title }}
 </h3>
 
-{{-- General Totals --}}
+    <div class="grid gap-4 md:grid-cols-3 lg:grid-cols-3">
+        @foreach ($items as $item)
+        <x-filament::card>
+            <h2 class="text-lg font-bold">{{ __('common.' . $item[0]) }}</h2>
+            <p>€ {{ number_format($item[1], 2) }}</p>
+        </x-filament::card>
+        @endforeach
+    </div>
+
+{{--
 <div class="flex flex-wrap justify-center gap-6 text-center">
     @foreach ($items as $item)
         <div class="w-44 h-28 flex flex-col justify-center items-center px-4 py-3 rounded-xl shadow bg-primary-600 text-white">
@@ -15,13 +25,13 @@
         </div>
     @endforeach
 </div>
+ --}}
 
-{{-- Platform-specific stats --}}
 @if (!empty($details))
 
-    <div class="mt-10">
+    <div class="mt-22">
         <h4 class="mb-4 text-center text-xl font-semibold text-gray-700">
-            Platform Breakdown
+            Platforms
         </h4>
 
         <div class="flex flex-wrap justify-center gap-6 text-center">

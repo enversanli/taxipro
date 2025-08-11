@@ -95,7 +95,10 @@ class InvoiceResource extends Resource
                 Hidden::make('cash'),
                 Hidden::make('net'),
                 Hidden::make('driver_salary'),
-
+                Section::make('Calculations')
+                    ->collapsed()
+                    ->collapsible()
+                    ->schema([
                 ViewField::make('test')
                     ->label('Total Gross')
                     ->view('filament.fields.total-gross', function (Get $get) {
@@ -114,10 +117,11 @@ class InvoiceResource extends Resource
                     })
                     ->reactive()
                     ->columnSpan('full'),
+                ]),
 
-
-
-                Section::make()
+                Section::make(__('common.invoice_detail') . ' (Uber, Bolt, Bliq, Freenow)')
+                    ->collapsed()
+                    ->collapsible()
                     ->schema([
                         HasManyRepeater::make('details')
                             ->afterStateUpdated(fn (?array $state, Set $set) => self::calculatePlatformMetrics($state, $set))
