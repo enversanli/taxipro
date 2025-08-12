@@ -51,4 +51,9 @@ class InsuranceInfoOverview extends BaseWidget
 
             ]);
     }
+
+    public function getColumnSpan(): int | string | array
+    {
+        return 1;
+    }
 }

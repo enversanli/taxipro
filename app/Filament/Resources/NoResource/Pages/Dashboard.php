@@ -22,5 +22,10 @@ class Dashboard extends Page
             InsuranceInfoOverview::class
         ];
     }
+
+    public function getFooterWidgetsColumns(): int | array
+    {
+        return 2;
+    }
 }
 

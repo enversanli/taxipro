@@ -39,4 +39,9 @@ class StatsOverview extends BaseWidget
 
         return $cards;
     }
+
+    public function getColumnSpan(): int | string | array
+    {
+        return 2; // Full width in a 2-column grid
+    }
 }
