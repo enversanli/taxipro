@@ -32,6 +32,11 @@ class Driver extends Model
         return $this->hasMany(Invoice::class);
     }
 
+    public function vouchers(): HasMany
+    {
+        return $this->hasMany(Voucher::class);
+    }
+
     public function getFullNameAttribute()
     {
         return "{$this->first_name} {$this->last_name}";
