@@ -7,19 +7,81 @@ Route::get('/', function () {
 });
 
 
-Route::get('test', function (){
-    $headers = [
-        'User-Agent' => 'de.mobile.android.app/9.0 (1000) (gzip)',
-        'X-Mobile-Api-Version' => '10',
-        'Accept' => 'application/json, text/plain, */*',
-        'Accept-Encoding' => 'gzip, deflate, br',
-        'Connection' => 'keep-alive',
-        'Host' => 'm.mobile.de',
-    ];
+Route::get('uber/redirect', function (\Illuminate\Http\Request $request){
+    $code = $request->input('code');
 
+    if (!$code) {
+        return response()->json(['error' => 'Authorization code not provided'], 400);
+    }
 
-    return \Illuminate\Support\Facades\Http::withHeaders($headers)
-        ->withOptions(['verify' => false, 'timeout' => 100])
-       ->get('https://m.mobile.de/svc/a/285041801')
-       ->dd();
-});
+    // Exchange the authorization code for an access token
+    $clientId = env('UBER_CLIENT');
+    $clientSecret = env('UBER_SECRET');
+
+    $response = \Illuminate\Support\Facades\Http::asForm()->post('https://auth.uber.com/oauth/v2/token', [
+        'client_id' => $clientId,
+        'client_secret' => $clientSecret,
+        'grant_type' => 'authorization_code',
+        'redirect_uri' => 'https://101bcde16e20.ngrok-free.app/uber/redirect',
+        'code' => $code,
+    ]);
+
+    $data = $response->json();
+
+    if ($response->failed()) {
+        return response()->json([
+            'error' => 'Token request failed',
+            'details' => $data,
+        ], 400);
+    }
+
+    return response()->json($data);
+})->name('uber.redirect');
+
+//Route::get('uber/privacy-policy', function (){
+//    dd(123);
+//});
+//
+//Route::get('uber', function (){
+//    $clientId = env('UBER_CLIENT');
+//    $redirectUri = 'https://101bcde16e20.ngrok-free.app/uber/redirect'; // This must match the one registered in Uber dashboard
+//    $scopes = urlencode('profile partner.accounts partner.payments partner.trips');
+//    $responseType = 'code';
+//
+//    $url = "https://auth.uber.com/oauth/v2/authorize?" . http_build_query([
+//            'client_id' => $clientId,
+//            'redirect_uri' => $redirectUri,
+//            'scope' => 'profile partner.accounts partner.payments partner.trips',
+//            'response_type' => 'code',
+//        ]);
+//
+//    return redirect()->away($url);
+//});
+//
+//
+//Route::get('uber/me', function (\Illuminate\Http\Request $request){
+//        // Replace with the actual access token you got from OAuth
+//        $accessToken = env('UBER_ACCESS_TOKEN');
+//
+//        // Example coordinates
+//        $latitude = 37.7759792;
+//        $longitude = -122.41823;
+//
+//        // Make GET request to Uber Sandbox API
+//        $response = \Illuminate\Support\Facades\Http::withHeaders([
+//            'Authorization' => 'Bearer ' . $accessToken,
+//        ])->get('https://test-api.uber.com/v1.2/products', [
+//            'latitude' => $latitude,
+//            'longitude' => $longitude,
+//        ]);
+//
+//        // Check for errors
+//        if ($response->failed()) {
+//            return response()->json([
+//                'error' => 'Request failed',
+//                'details' => $response->json(),
+//            ], $response->status());
+//        }
+//
+//        return $response->json();
+//});

@@ -14,6 +14,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
 use Filament\Forms\Form;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -239,8 +240,10 @@ class InvoiceResource extends Resource
             'index' => Pages\ListDriverInvoices::route('/'),
             'create' => Pages\CreateDriverInvoice::route('/create'),
             'edit' => Pages\EditDriverInvoice::route('/{record}/edit'),
+            'import' => Pages\ImportInvoice::route('/import-invoice'),
         ];
     }
+
 
     protected static function calculatePlatformMetrics(?array $state, Set $set): void
     {

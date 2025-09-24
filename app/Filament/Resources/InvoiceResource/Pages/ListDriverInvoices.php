@@ -14,6 +14,10 @@ class ListDriverInvoices extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+            Actions\Action::make('Import external link')
+                ->url(ImportInvoice::getResource()::getUrl('import'))
+                ->icon('heroicon-o-link')
+                ->color('primary'),
         ];
     }
 
