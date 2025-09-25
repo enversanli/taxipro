@@ -6,30 +6,35 @@ use App\Filament\Resources\InvoiceResource;
 use Filament\Forms;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 
 class ImportInvoice extends Page implements Forms\Contracts\HasForms
 {
     use Forms\Concerns\InteractsWithForms;
 
+    public $platform;
+    public $month;
+    public $week;        // <-- This is REQUIRED
+    public $attachment;  // <-- Required for file uploads
+
     protected static string $resource = InvoiceResource::class;
     protected static string $view = 'filament.resources.invoice-resource.pages.import-invoice';
 
-    /**
-     * Initialize the form when the page loads.
-     */
     public function mount(): void
     {
-        $this->form->fill([]);
+        $this->form->fill([
+            'platform' => null,
+            'month' => null,
+            'week' => null,
+            'attachment' => null,
+        ]);
     }
 
-    /**
-     * Define the form schema.
-     */
     protected function getFormSchema(): array
     {
         return [
-            Select::make('platform')
+            Forms\Components\Select::make('platform')
                 ->label('Platform')
                 ->options([
                     'uber' => 'Uber',
@@ -39,35 +44,47 @@ class ImportInvoice extends Page implements Forms\Contracts\HasForms
                 ])
                 ->required(),
 
-            Select::make('month')
+            Forms\Components\Select::make('month')
                 ->label('Month')
                 ->options(fn() => __('common.months'))
                 ->required(),
 
+            Forms\Components\Select::make('week')
+                ->label('Week')
+                ->options([
+                    '1' => 'Week 1',
+                    '2' => 'Week 2',
+                    '3' => 'Week 3',
+                    '4' => 'Week 4',
+                ])
+                ->required()
+                ->visible(fn(callable $get) => $get('platform') === 'uber'),
+
             FileUpload::make('attachment')
                 ->label('Upload CSV / Excel')
                 ->directory('imports')
-                ->acceptedFileTypes(['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])
-                ->required(),
+                ->acceptedFileTypes([
+                    'text/csv',
+                    'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                ])
+                ->required()
         ];
     }
 
-    /**
-     * Handle form submission.
-     */
     public function submit()
     {
-        $data = $this->form->getState();
+        $data = $this->form->validate();
 
-        // Extract uploaded file path
-        $filePath = $data['attachment'];
-
-        // Call service class to process the file
         app(\App\Services\InvoiceImportService::class)
-            ->import($filePath, $data['platform'], $data['month']);
+            ->import($data);
 
-        $this->notify('success', 'Invoices imported successfully!');
+        Notification::make()
+            ->title('Invoices imported successfully!')
+            ->success()
+            ->send();
 
         return redirect(static::$resource::getUrl('index'));
     }
 }
+

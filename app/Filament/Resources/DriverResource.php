@@ -39,6 +39,7 @@ class DriverResource extends Resource
                 TextInput::make('first_name')->required(),
                 TextInput::make('last_name')->required(),
                 TextInput::make('phone')->tel(),
+                TextInput::make('email')->email(),
                 TextInput::make('address'),
                 Select::make('work_model')
                     ->label('Work Model')
@@ -77,6 +78,11 @@ class DriverResource extends Resource
                 TextColumn::make('address')
                     ->label('Address')
                     ->limit(20),
+
+                TextColumn::make('email')
+                    ->label('Email')
+                    ->searchable()
+                    ->sortable(),
 
                 TextColumn::make('work_model')
                     ->label('Work Model')

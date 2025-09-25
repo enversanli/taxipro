@@ -13,6 +13,7 @@ class InvoiceDetail extends Model
         'invoice_id',
         'platform',
         'total_income',
+        'commission',
         'gross',
         'tip',
         'cash',

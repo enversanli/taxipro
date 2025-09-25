@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('company_id')->constrained('drivers')->cascadeOnDelete();
             $table->foreignId('driver_id')->constrained('drivers')->cascadeOnDelete();
-            $table->foreignId('vehicle_id')->constrained('vehicles')->cascadeOnDelete();
+            $table->foreignId('vehicle_id')->nullable()->constrained('vehicles')->cascadeOnDelete();
             $table->year('year')->default(now()->format('Y'));
             $table->string('month')->default(now()->format('m'));
             $table->decimal('total_income', 10)->default(0);

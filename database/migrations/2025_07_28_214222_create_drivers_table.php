@@ -18,7 +18,8 @@ return new class extends Migration
             $table->string('last_name');
             $table->string('phone')->nullable();
             $table->string('address')->nullable();
-            $table->enum('work_model', ['taxi', 'rent']);
+            $table->string('email')->nullable();
+            $table->enum('work_model', ['taxi', 'rent'])->default('taxi');
             $table->string('provision_model')->nullable();
             $table->timestamps();
         });
