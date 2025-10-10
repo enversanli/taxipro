@@ -1,4 +1,8 @@
 <x-filament-panels::page>
+    <div class="mb-4">
+        @livewire(\App\Filament\Widgets\LanguageSwitcher::class)
+    </div>
+
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <x-filament::card>
             <h2 class="text-lg font-bold">Welcome to Taxi Pro Admin</h2>

@@ -31,5 +31,8 @@ class AppServiceProvider extends ServiceProvider
         FilamentAsset::register([
             Css::make('example-local-stylesheet', asset('css/filament.css')),
         ]);
+
+        $locale = session('locale', config('app.locale'));
+        app()->setLocale($locale);
     }
 }

@@ -7,6 +7,7 @@ return [
     'driver' => 'Fahrer',
     'company' => 'Firma',
     'invoice' => 'Rechnung',
+    'invoices' => 'Rechnungen',
     'driver_invoice' => 'Fahrerrechnung',
     'vehicles' => 'Fahrzeuge',
     'users' => 'Benutzer',
