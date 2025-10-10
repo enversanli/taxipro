@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Invoice;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
 
 class InvoiceExportService
@@ -43,5 +44,38 @@ class InvoiceExportService
 
             fclose($handle);
         }, 200, $headers);
+    }
+
+
+    public function displaySingle($invoiceId)
+    {
+        $invoice = Invoice::with(['driver', 'company', 'details'])->findOrFail($invoiceId);
+
+        // Load the PDF view with proper options
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.driver-invoice', ['invoice' => $invoice])
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'defaultFont' => 'DejaVu Sans',   // fully UTF-8 compatible
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+            ]);
+
+
+        // Generate safe filename for download
+        $fileName = "Invoice-{$invoice->driver->first_name}-{$invoice->month}-{$invoice->year}.pdf";
+
+        // Replace filesystem-unsafe characters
+        $safeFileName = preg_replace('/[\/\\\?%*:|"<>]/u', '_', $fileName);
+
+        // Browser view
+        if (request()->query('view') === 'browser') {
+            return $pdf->stream($safeFileName);
+        }
+
+        return response($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . rawurlencode($safeFileName) . '"; filename*=UTF-8\'\'' . rawurlencode($safeFileName),
+        ]);
+        // return $pdf->download($safeFileName);
     }
 }

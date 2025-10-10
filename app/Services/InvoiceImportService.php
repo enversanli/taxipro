@@ -108,7 +108,7 @@ class InvoiceImportService
         }
 
         $fullName = explode(' ', $invoice['name']);
-
+        dd($fullName);
         return Driver::create([
             'first_name' => $fullName[0],
             'last_name' => $fullName[1],

@@ -6,6 +6,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/invoices/{id}/pdf', function ($id) {
+    return app(\App\Services\InvoiceExportService::class)->displaySingle($id);
+})->name('invoices.pdf');
 
 Route::get('uber/redirect', function (\Illuminate\Http\Request $request){
     $code = $request->input('code');

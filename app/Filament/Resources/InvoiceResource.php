@@ -31,6 +31,11 @@ class InvoiceResource extends Resource
     protected static ?string $navigationLabel = 'Invoices';
     protected static ?string $pluralModelLabel = 'Invoices';
 
+    public static function getNavigationGroup(): ?string
+    {
+        return __('common.invoices');
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -210,16 +215,43 @@ class InvoiceResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\Action::make('export')
-                    ->label('Export')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->action(function ($record) {
-                        $service = app(InvoiceExportService::class);
-                        return $service->exportSingle($record->id);
-                    }),
+
+                // Group PDF-related actions
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('export')
+                        ->label('Export')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                            $service = app(InvoiceExportService::class);
+                            return $service->exportSingle($record->id);
+                        }),
+
+                    Tables\Actions\Action::make('download_pdf')
+                        ->label('Download PDF')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('success')
+                        ->action(fn ($record) => app(\App\Services\InvoiceExportService::class)->displaySingle($record->id)),
+
+                    Tables\Actions\Action::make('view_pdf')
+                        ->label('View PDF')
+                        ->icon('heroicon-o-eye')
+                        ->color('primary')
+                        ->url(fn ($record) => route('invoices.pdf', ['id' => $record->id, 'view' => 'browser']))
+                        ->openUrlInNewTab(),
+
+                    Tables\Actions\Action::make('send_whatsapp')
+                        ->label('Send via WhatsApp')
+                        ->icon('heroicon-o-chat-bubble-oval-left-ellipsis')
+                        ->color('success')
+                        ->url(fn ($record) => 'https://wa.me/?text=' . urlencode(
+                                "Here is your invoice PDF:\n" . route('invoices.pdf', ['id' => $record->id, 'view' => 'browser'])
+                            ))
+                        ->openUrlInNewTab(),
+                ])->label('PDF Actions') // This is optional, shows a tooltip
             ])
+
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

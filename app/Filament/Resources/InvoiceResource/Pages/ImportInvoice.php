@@ -13,6 +13,11 @@ class ImportInvoice extends Page implements Forms\Contracts\HasForms
 {
     use Forms\Concerns\InteractsWithForms;
 
+    protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
+    protected static ?string $navigationLabel = 'Invoice Report';
+    protected static ?string $title = 'Import Invoice';
+    protected static bool $shouldRegisterNavigation = true;
+
     public $platform;
     public $month;
     public $week;        // <-- This is REQUIRED
@@ -20,6 +25,11 @@ class ImportInvoice extends Page implements Forms\Contracts\HasForms
 
     protected static string $resource = InvoiceResource::class;
     protected static string $view = 'filament.resources.invoice-resource.pages.import-invoice';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('common.invoices');
+    }
 
     public function mount(): void
     {

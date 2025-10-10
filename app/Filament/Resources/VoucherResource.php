@@ -22,6 +22,12 @@ class VoucherResource extends Resource
     protected static ?string $navigationLabel = 'Taxi Vouchers';
     protected static ?string $pluralLabel = 'Taxi Vouchers';
     protected static ?string $modelLabel = 'Taxi Voucher';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('common.invoices');
+    }
+
     public static function form(Form $form): Form
     {
         return $form
