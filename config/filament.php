@@ -2,6 +2,8 @@
 
 return [
 
+    'locale' => fn () => session('locale', config('app.locale')),
+
     /*
     |--------------------------------------------------------------------------
     | Broadcasting

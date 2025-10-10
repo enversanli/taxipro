@@ -10,6 +10,16 @@ Route::get('/invoices/{id}/pdf', function ($id) {
     return app(\App\Services\InvoiceExportService::class)->displaySingle($id);
 })->name('invoices.pdf');
 
+Route::get('/set-locale/{locale}', function ($locale) {
+    if (in_array($locale, ['en', 'tr', 'de'])) {
+        session(['locale' => $locale]);
+        app()->setLocale($locale);
+    }
+
+    return redirect()->back();
+})->name('set-locale');
+
+
 Route::get('uber/redirect', function (\Illuminate\Http\Request $request){
     $code = $request->input('code');
 

@@ -5,21 +5,22 @@ namespace App\Filament\Widgets;
 use Filament\Widgets\Widget;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Session;
 
 class LanguageSwitcher extends Widget implements Forms\Contracts\HasForms
 {
     use InteractsWithForms;
 
     protected static string $view = 'filament.widgets.language-switcher';
-    protected int|string|array $columnSpan = 1; // small width for header
+    protected int|string|array $columnSpan = 1;
 
     public $locale;
 
     public function mount(): void
     {
-        $this->form->fill([
-            'locale' => session('locale', config('app.locale')),
-        ]);
+        $this->locale = session('locale', config('app.locale'));
+        $this->form->fill(['locale' => $this->locale]);
     }
 
     protected function getFormSchema(): array
@@ -31,16 +32,21 @@ class LanguageSwitcher extends Widget implements Forms\Contracts\HasForms
                     'en' => 'English',
                     'tr' => 'Türkçe',
                     'de' => 'Deutsch',
-                ]),
+                ])
+                ->reactive()
+                ->afterStateUpdated(fn ($state) => $this->submit($state)),
         ];
     }
 
-    public function submit()
+    public function submit($locale): void
     {
-        $data = $this->form->getState();
-        session(['locale' => $data['locale']]);
-        app()->setLocale($data['locale']);
+        redirect()->route('set-locale', ['locale' => $locale]);
+    }
 
-        return redirect()->back();
+    protected function getViewData(): array
+    {
+        return [
+            'form' => $this->form,
+        ];
     }
 }

@@ -14,7 +14,6 @@ class StatsOverview extends BaseWidget
     public $month;
     public $driver_id;
 
-    protected static string $view = 'filament.widgets.stats-overview';
     protected $listeners = ['filtersUpdated' => 'updateFilters'];
 
     public function updateFilters($filters)

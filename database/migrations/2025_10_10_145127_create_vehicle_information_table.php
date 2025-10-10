@@ -11,9 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('vehicle_information', function (Blueprint $table) {
+        Schema::create('vehicle_expenses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('vehicle_id')->on('vehicles');
+            $table->foreignId('vehicle_id')->constrained('vehicles')->cascadeOnDelete();
+            $table->enum('type', ['fuel', 'repair', 'insurance', 'other'])->default('other');
+            $table->decimal('amount', 10)->default(0)->nullable();
+            $table->date('date')->nullable();
+            $table->string('receipt_path')->nullable();
+            $table->string('description')->nullable();
+            $table->text('note')->nullable();
             $table->timestamps();
         });
     }

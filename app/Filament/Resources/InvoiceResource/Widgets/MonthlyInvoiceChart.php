@@ -11,9 +11,22 @@ class MonthlyInvoiceChart extends ChartWidget
 {
     protected static ?string $heading = 'Monthly Invoices';
 
+    protected $listeners = ['filtersUpdated' => 'updateFilters'];
+
+    public ?string $month = null;
+    public ?int $driver_id = null;
+
+    public function updateFilters($filters)
+    {
+        $this->month = $filters['month'] ?? null;
+        $this->driver_id = $filters['driver_id'] ?? null;
+
+        $this->resetChartData(); // Rebuild chart data dynamically
+    }
+
     protected function getData(): array
     {
-        $invoices = Invoice::select(
+        $query = Invoice::select(
             'month',
             DB::raw('SUM(total_income) as total_income'),
             DB::raw('SUM(gross) as gross_total'),
@@ -22,57 +35,73 @@ class MonthlyInvoiceChart extends ChartWidget
             DB::raw('SUM(tip) as tip_total')
         )
             ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+            ->orderBy('month');
 
-        $labels = $invoices->map(fn($item) => Carbon::createFromFormat('m', $item->month)->format('M'))->toArray();
+        // 🔹 Apply filters dynamically
+        if ($this->month) {
+            $query->where('month', $this->month);
+        }
 
+        if ($this->driver_id) {
+            $query->where('driver_id', $this->driver_id);
+        }
+
+        $invoices = $query->get();
+
+        $labels = $invoices->map(
+            fn($item) => Carbon::createFromFormat('m', $item->month)->format('M')
+        )->toArray();
 
         return [
             'datasets' => [
                 [
                     'label' => 'Taximaetre',
                     'data' => $invoices->pluck('total_income')->toArray(),
-                    'borderColor' => '#3b82f6', // blue
+                    'borderColor' => '#3b82f6',
                     'backgroundColor' => 'rgba(59, 130, 246, 0.2)',
                     'fill' => true,
                 ],
                 [
                     'label' => 'Gross',
                     'data' => $invoices->pluck('gross_total')->toArray(),
-                    'borderColor' => '#ef4444', // red
+                    'borderColor' => '#ef4444',
                     'backgroundColor' => 'rgba(239, 68, 68, 0.2)',
                     'fill' => true,
                 ],
                 [
                     'label' => 'Net',
                     'data' => $invoices->pluck('net_total')->toArray(),
-                    'borderColor' => '#10b981', // green
+                    'borderColor' => '#10b981',
                     'backgroundColor' => 'rgba(16, 185, 129, 0.2)',
                     'fill' => true,
                 ],
                 [
                     'label' => 'Cash',
                     'data' => $invoices->pluck('cash_total')->toArray(),
-                    'borderColor' => '#f59e0b', // amber
+                    'borderColor' => '#f59e0b',
                     'backgroundColor' => 'rgba(245, 158, 11, 0.2)',
                     'fill' => true,
                 ],
                 [
                     'label' => 'Tip',
                     'data' => $invoices->pluck('tip_total')->toArray(),
-                    'borderColor' => '#8b5cf6', // purple
+                    'borderColor' => '#8b5cf6',
                     'backgroundColor' => 'rgba(139, 92, 246, 0.2)',
                     'fill' => true,
                 ],
             ],
             'labels' => $labels,
         ];
-
     }
 
     protected function getType(): string
     {
         return 'line';
+    }
+
+    // 🔹 Helper: refresh chart data dynamically
+    public function resetChartData()
+    {
+        $this->dispatch('$refresh');
     }
 }

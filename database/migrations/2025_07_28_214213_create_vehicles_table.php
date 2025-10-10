@@ -34,6 +34,7 @@ return new class extends Migration
             $table->string('code')->nullable();
             $table->date('tuv_date')->nullable();
             $table->date('insurance_date')->nullable();
+            $table->text('notes')->nullable();
             $table->timestamps();
 
             $table->unique(['company_id', 'license_plate', 'code']);
