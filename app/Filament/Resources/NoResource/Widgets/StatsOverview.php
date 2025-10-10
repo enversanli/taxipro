@@ -11,30 +11,57 @@ use Filament\Widgets\StatsOverviewWidget\Card;
 
 class StatsOverview extends BaseWidget
 {
+    public $month;
+    public $driver_id;
+
+    protected static string $view = 'filament.widgets.stats-overview';
+    protected $listeners = ['filtersUpdated' => 'updateFilters'];
+
+    public function updateFilters($filters)
+    {
+        $this->month = $filters['month'] ?? null;
+        $this->driver_id = $filters['driver_id'] ?? null;
+
+        $this->resetCached(); // recalc cards
+    }
+
     protected function getCards(): array
     {
-        $cards = [Card::make('Drivers', Driver::count())
-            ->description('Your Total Driver')
-            ->icon('heroicon-o-user')
-            ->color('primary')
-            ->chart([30, 20, 31, 3, 25, 4, 40]),
-            Card::make('Invoices', Invoice::count())
+        $driversQuery = Driver::query();
+        $invoicesQuery = Invoice::query();
+        $vehiclesQuery = Vehicle::query();
+        $companiesQuery = Company::query();
+
+        if ($this->month) {
+            $invoicesQuery->where('month', $this->month);
+        }
+
+        if ($this->driver_id) {
+            $invoicesQuery->where('driver_id', $this->driver_id);
+        }
+
+        $cards = [
+            Card::make('Drivers', $driversQuery->count())
+                ->description('Your Total Driver')
+                ->icon('heroicon-o-user')
+                ->color('primary'),
+
+            Card::make('Invoices', $invoicesQuery->count())
                 ->icon('heroicon-o-document-text')
                 ->description('Your Total Invoices')
-                ->color('danger')
-                ->chart([37, 50, 14, 13, 65, 34, 10]),
-            Card::make('Vehicles', Vehicle::count())
+                ->color('danger'),
+
+            Card::make('Vehicles', $vehiclesQuery->count())
                 ->color('success')
                 ->icon('heroicon-o-truck')
-                ->description('Your Total Vehicles')
-                ->chart([17, 10, 1, 3, 25, 4, 40]),];
+                ->description('Your Total Vehicles'),
+        ];
 
-        if (auth()->user()->isAdmin()){
-            $cards[] = Card::make('Companies', Company::count())
+        if (auth()->user()->isAdmin()) {
+            $cards[] = Card::make('Companies', $companiesQuery->count())
                 ->icon('heroicon-o-building-office')
                 ->color('warning')
-                ->description('Total Companies')
-                ->chart([7, 2, 10, 3, 15, 4, 17]);
+                ->description('Total Companies');
         }
 
         return $cards;
@@ -42,6 +69,6 @@ class StatsOverview extends BaseWidget
 
     public function getColumnSpan(): int | string | array
     {
-        return 2; // Full width in a 2-column grid
+        return 2;
     }
 }

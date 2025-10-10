@@ -12,10 +12,10 @@ class InvoiceObserver
         $platforms = ['uber', 'bolt', 'bliq', 'freenow'];
 
         foreach ($platforms as $platform) {
-            InvoiceDetail::create([
-                'invoice_id' => $invoice->id,
-                'platform' => $platform,
-            ]);
+            // InvoiceDetail::create([
+            // 'invoice_id' => $invoice->id,
+            //    'platform' => $platform,
+            // ]);
         }
     }
 }

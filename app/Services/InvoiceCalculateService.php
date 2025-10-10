@@ -44,15 +44,15 @@ class InvoiceCalculateService
                 $bar = $items->sum(fn($item) => (float)($item['bar'] ?? 0));
 
                 $commissionRate = (float)($this->commission[$platform]['commission'] ?? 0);
-                $cash = ($gross ?? 0) - ($tip ?? 0) - ($bar ?? 0);
                 $net = $gross * (1 - $commissionRate);
+                $cash = $gross + $tip - $bar; // adjust if needed
 
                 return [
-                    'gross' => $gross ?? 0,
-                    'tip' => $tip ?? 0,
-                    'bar' => $bar ?? 0,
-                    'cash' => $cash ?? 0,
-                    'net' => 0,
+                    'gross' => $gross,
+                    'tip' => $tip,
+                    'bar' => $bar,
+                    'cash' => $cash,
+                    'net' => $net,
                     'platform' => $platform
                 ];
             })

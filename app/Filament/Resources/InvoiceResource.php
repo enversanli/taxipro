@@ -40,104 +40,100 @@ class InvoiceResource extends Resource
     {
         return $form
             ->schema([
-                auth()->user()->role === 'admin'
-                    ? Select::make('company_id')
-                    ->label('Company')
-                    ->options(Company::all()->pluck('name', 'id'))
-                    ->searchable()
-                    ->required()
-                    : Hidden::make('company_id')
-                    ->default(auth()->user()->company_id),
-                Select::make('driver_id')
-                    ->label(__('common.driver'))
-                    ->relationship(
-                        name: 'driver',
-                        titleAttribute: 'first_name',
-                        modifyQueryUsing: fn ($query, $search) => $query->where(function ($q) use ($search) {
-                            $q->where('first_name', 'like', "%{$search}%")
-                                ->orWhere('last_name', 'like', "%{$search}%");
-                        })
-                    )
-                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->first_name} {$record->last_name}")
-                    ->searchable()
-                    ->required(),
+                Section::make('Invoice Info')
+                    ->columns(3)
+                    ->schema([
+                        auth()->user()->role === 'admin'
+                            ? Select::make('company_id')
+                            ->label('Company')
+                            ->options(Company::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->required()
+                            : Hidden::make('company_id')
+                            ->default(auth()->user()->company_id),
 
-                Select::make('vehicle_id')
-                    ->label(__('common.vehicle'))
-                    ->relationship('vehicle', 'license_plate')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->brand} {$record->model} - {$record->license_plate}")
-                    ->searchable()
-                    ->required(),
+                        Select::make('driver_id')
+                            ->label(__('common.driver'))
+                            ->relationship(
+                                name: 'driver',
+                                titleAttribute: 'first_name',
+                                modifyQueryUsing: fn ($query, $search) => $query->where(function ($q) use ($search) {
+                                    $q->where('first_name', 'like', "%{$search}%")
+                                        ->orWhere('last_name', 'like', "%{$search}%");
+                                })
+                            )
+                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->first_name} {$record->last_name}")
+                            ->searchable()
+                            ->required(),
 
-                TextInput::make('year')
-                    ->label(__('common.year'))
-                    ->default(now()->format('Y'))
-                    ->disabled()
-                    ->required(),
+                        Select::make('vehicle_id')
+                            ->label(__('common.vehicle'))
+                            ->relationship('vehicle', 'license_plate')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->brand} {$record->model} - {$record->license_plate}")
+                            ->searchable()
+                            ->required(),
 
-                Select::make('month')
-                    ->label(__('common.month'))
-                    ->options(fn () => __('common.months')) // use closure for better formatting and potential dynamic behavior
-                    ->searchable()
-                    ->required(),
+                        TextInput::make('year')
+                            ->label(__('common.year'))
+                            ->default(now()->format('Y'))
+                            ->disabled()
+                            ->required(),
 
-                TextInput::make('total_income')
-                    ->label(__('common.total_income') . ' (Taximetre)')
-                    ->numeric()
-                    ->prefix('€') // Shows the euro sign to the left
-                    ->placeholder('0.00') // A helpful hint for users
-                    ->suffixIcon('heroicon-o-calculator') // Optional: adds a small calculator icon
-                    ->default(0)
-                    ->required()
-                    ->extraInputAttributes(['class' => 'text-right']) // Aligns text to right, common for numbers
-                    ->columnSpan([
-                        'default' => 1,
-                        'md' => 1,
+                        Select::make('month')
+                            ->label(__('common.month'))
+                            ->options(fn () => __('common.months'))
+                            ->searchable()
+                            ->required(),
+
+                        TextInput::make('total_income')
+                            ->label(__('common.total_income'))
+                            ->prefix('€')
+                            ->numeric()
+                            ->default(0)
+                            ->placeholder('0.00')
+                            ->suffixIcon('heroicon-o-calculator')
+                            ->extraInputAttributes(['class' => 'text-right'])
+                            ->required(),
                     ]),
 
-                Hidden::make('gross'),
-                Hidden::make('bar'),
-                Hidden::make('tip'),
-                Hidden::make('cash'),
-                Hidden::make('net'),
-                Hidden::make('driver_salary'),
                 Section::make('Calculations')
                     ->collapsed()
                     ->collapsible()
                     ->schema([
-                ViewField::make('test')
-                    ->label('Total Gross')
-                    ->view('filament.fields.total-gross', function (Get $get) {
-                        return [
-                            'items' => [
-                                ['gross', (float) $get('gross') ?? $get('model.gross')],
-                                ['bar', (float) $get('bar') ?? $get('model.bar')],
-                                ['tip', (float) $get('tip') ?? $get('model.tip')],
-                                ['cash', (float) $get('cash') ?? $get('model.cash')],
-                                ['net', (float) $get('net') ?? $get('model.net')],
-                                ['driver_salary', (float) $get('driver_salary') ?? $get('model.driver_salary')],
-                            ],
-                            'details' => $get('details' ?? (object)[]),
-                            'title' => 'Platform Calculations'
-                        ];
-                    })
-                    ->reactive()
-                    ->columnSpan('full'),
-                ]),
+                        ViewField::make('summary')
+                            ->label('Summary')
+                            ->view('filament.fields.total-gross', function (Get $get) {
+                                return [
+                                    'items' => [
+                                        ['gross', (float) $get('gross') ?? $get('model.gross')],
+                                        ['bar', (float) $get('bar') ?? $get('model.bar')],
+                                        ['tip', (float) $get('tip') ?? $get('model.tip')],
+                                        ['cash', (float) $get('cash') ?? $get('model.cash')],
+                                        ['net', (float) $get('net') ?? $get('model.net')],
+                                        ['driver_salary', (float) $get('driver_salary') ?? $get('model.driver_salary')],
+                                    ],
+                                    'title' => 'Platform Calculations'
+                                ];
+                            })
+                            ->reactive()
+                            ->columnSpan('full'),
+                    ]),
 
-                Section::make(__('common.invoice_detail') . ' (Uber, Bolt, Bliq, Freenow)')
-                    ->collapsed()
+                Section::make(__('common.invoice_detail'))
                     ->collapsible()
+                    ->collapsed()
                     ->schema([
                         HasManyRepeater::make('details')
+                            ->relationship('details')
+                            ->reactive()
                             ->afterStateUpdated(fn (?array $state, Set $set) => self::calculatePlatformMetrics($state, $set))
                             ->afterStateHydrated(fn (?array $state, Set $set) => self::calculatePlatformMetrics($state, $set))
-                            ->reactive()
-                            ->collapsed()
                             ->itemLabel(fn (array $state): ?string => strtoupper($state['platform'] ?? '') ?: 'Detail')
-                        ->grid(2)
-                            ->relationship('details')
-                            ->label('Invoice Details')
+                            ->grid(2)
+                            ->columns(4)
+                            ->createItemButtonLabel('Add Detail')
+                            ->defaultItems(1)
+                            ->reorderable()
                             ->schema([
                                 Select::make('platform')
                                     ->label('Platform')
@@ -152,49 +148,39 @@ class InvoiceResource extends Resource
                                     ->columnSpan(2),
 
                                 TextInput::make('gross')
-                                    ->label('Gross')
+                                    ->label('Gross (€)')
                                     ->numeric()
                                     ->default(0)
                                     ->required()
                                     ->prefix('€')
-                                    ->step(0.01)
-                                    ->columnSpan(1),
+                                    ->step(0.01),
 
                                 TextInput::make('tip')
-                                    ->label('Tip')
+                                    ->label('Tip (€)')
                                     ->numeric()
                                     ->default(0)
                                     ->prefix('€')
-                                    ->step(0.01)
-                                    ->columnSpan(1),
+                                    ->step(0.01),
 
                                 TextInput::make('bar')
-                                    ->label('Bar')
+                                    ->label('Bar (€)')
                                     ->numeric()
                                     ->default(0)
                                     ->prefix('€')
-                                    ->step(0.01)
-                                    ->columnSpan(1),
+                                    ->step(0.01),
+
                                 Hidden::make('cash'),
 
                                 TextInput::make('net')
-                                    ->label('Net')
+                                    ->label('Net (€)')
                                     ->numeric()
                                     ->default(0)
                                     ->prefix('€')
-                                    ->step(0.01)
-                                    ->columnSpan(1),
+                                    ->step(0.01),
                             ])
-                            ->columns(4)
                             ->columns(2)
-                            ->createItemButtonLabel('Add Detail')
-                            ->defaultItems(1)
-                            ->reorderable()
-                            ->columnSpan(2), // takes half grid
-
-                    ])
-                    ->columns(1)
-
+                            ->columnSpan(2),
+                    ]),
             ]);
     }
 
@@ -202,60 +188,18 @@ class InvoiceResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('driver.first_name')->label(__('common.first_name')),
-                TextColumn::make('driver.last_name')->label(__('common.last_name')),
-                TextColumn::make('year')->label(__('common.year')),
-                TextColumn::make('month')->label(__('common.month')),
-                TextColumn::make('total_income')->label(__('common.total_income')),
-                TextColumn::make('created_at')->dateTime()->label('Created'),
+                TextColumn::make('driver.first_name')->label('First Name'),
+                TextColumn::make('driver.last_name')->label('Last Name'),
+                TextColumn::make('month')->label('Month'),
+                TextColumn::make('total_income')->label('Total Income'),
             ])
             ->filters([
-                //
-            ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\ViewAction::make(),
-
-                // Group PDF-related actions
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('export')
-                        ->label('Export')
-                        ->icon('heroicon-o-arrow-down-tray')
-                        ->color('success')
-                        ->requiresConfirmation()
-                        ->action(function ($record) {
-                            $service = app(InvoiceExportService::class);
-                            return $service->exportSingle($record->id);
-                        }),
-
-                    Tables\Actions\Action::make('download_pdf')
-                        ->label('Download PDF')
-                        ->icon('heroicon-o-arrow-down-tray')
-                        ->color('success')
-                        ->action(fn ($record) => app(\App\Services\InvoiceExportService::class)->displaySingle($record->id)),
-
-                    Tables\Actions\Action::make('view_pdf')
-                        ->label('View PDF')
-                        ->icon('heroicon-o-eye')
-                        ->color('primary')
-                        ->url(fn ($record) => route('invoices.pdf', ['id' => $record->id, 'view' => 'browser']))
-                        ->openUrlInNewTab(),
-
-                    Tables\Actions\Action::make('send_whatsapp')
-                        ->label('Send via WhatsApp')
-                        ->icon('heroicon-o-chat-bubble-oval-left-ellipsis')
-                        ->color('success')
-                        ->url(fn ($record) => 'https://wa.me/?text=' . urlencode(
-                                "Here is your invoice PDF:\n" . route('invoices.pdf', ['id' => $record->id, 'view' => 'browser'])
-                            ))
-                        ->openUrlInNewTab(),
-                ])->label('PDF Actions') // This is optional, shows a tooltip
-            ])
-
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Tables\Filters\SelectFilter::make('month')
+                    ->label('Month')
+                    ->options(fn () => __('common.months')),
+                Tables\Filters\SelectFilter::make('driver_id')
+                    ->label('Driver')
+                    ->relationship('driver', 'first_name'),
             ]);
     }
 
