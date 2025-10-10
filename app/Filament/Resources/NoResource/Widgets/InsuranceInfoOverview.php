@@ -24,26 +24,26 @@ class InsuranceInfoOverview extends BaseWidget
             )
             ->columns([
                 Tables\Columns\TextColumn::make('license_plate')
-                    ->label('Plate')
+                    ->label(__('common.license_plate'))
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('insurance_date')
-                    ->label('Insurance Date')
+                    ->label(__('common.insurance_date'))
                     ->date('d M Y')
                     ->color('success'),
 
                 Tables\Columns\TextColumn::make('upcoming_insurance_date')
-                    ->label('Upcoming Insurance Date')
+                    ->label(__('common.upcoming_insurance_date'))
                     ->date('d M Y')
                     ->color('danger'),
 
                 Tables\Columns\TextColumn::make('insurance_status')
-                    ->label('Status')
+                    ->label(__('common.insurance_status'))
                     ->colors([
-                        'warning' => 'EXPIRED',
-                        'success' => 'UPCOMING',
-                        'danger' => 'SOON',
-                        'secondary' => 'UNKNOWN',
+                        'warning' => __('common.insurance_statuses.expired'),
+                        'success' => __('common.insurance_statuses.upcoming'),
+                        'danger'  => __('common.insurance_statuses.soon'),
+                        'secondary' => __('common.insurance_statuses.unknown'),
                     ])
                     ->extraAttributes([
                         'class' => 'font-bold',

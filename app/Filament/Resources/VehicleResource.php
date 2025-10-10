@@ -19,9 +19,13 @@ class VehicleResource extends Resource
     protected static ?string $model = Vehicle::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';
-    protected static ?string $navigationLabel = 'List';
-    protected static ?string $pluralLabel = 'Vehicles';
-    protected static ?string $modelLabel = 'Vehicle';
+    protected static ?string $pluralLabel = 'vehicles';
+    protected static ?string $modelLabel = 'vehicle';
+
+    public static function getNavigationLabel(): string
+    {
+        return __('common.vehicles');
+    }
 
     public static function getNavigationGroup(): ?string
     {
@@ -31,19 +35,19 @@ class VehicleResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Section::make('Vehicle Information')
-                ->description('Basic details about the vehicle')
+            Forms\Components\Section::make(__('common.vehicle_information'))
+                ->description(__('common.vehicle_description'))
                 ->schema([
 
                     Select::make('company_id')
-                        ->label('Company')
+                        ->label(__('common.company'))
                         ->options(fn () => Company::pluck('name', 'id'))
                         ->searchable()
                         ->visible(fn () => auth()->user()->role === 'admin')
                         ->required(),
 
                     Select::make('brand')
-                        ->label('Brand')
+                        ->label(__('common.brand'))
                         ->options([
                             'Mercedes-Benz' => 'Mercedes-Benz',
                             'Volkswagen' => 'Volkswagen',
@@ -60,41 +64,41 @@ class VehicleResource extends Resource
                         ->searchable(),
 
                     Forms\Components\TextInput::make('model')
-                        ->label('Model')
+                        ->label(__('common.model'))
                         ->required()
                         ->maxLength(255),
 
                     Forms\Components\TextInput::make('license_plate')
-                        ->label('License Plate')
+                        ->label(__('common.license_plate'))
                         ->required()
                         ->maxLength(255)
                         ->unique(ignoreRecord: true),
 
                     Forms\Components\Select::make('usage_type')
-                        ->label('Usage Type')
+                        ->label(__('common.usage_type'))
                         ->options([
-                            'taxi' => 'Taxi',
-                            'rent' => 'Mietwagen',
+                            'taxi' => __('common.taxi'),
+                            'rent' => __('common.rent_car'),
                         ])
                         ->required()
                         ->native(false),
 
                     Forms\Components\TextInput::make('color')
-                        ->label('Color')
+                        ->label(__('common.color'))
                         ->maxLength(255),
 
                     Forms\Components\TextInput::make('code')
-                        ->label('Vehicle Code')
+                        ->label(__('common.vehicle_code'))
                         ->required()
                         ->maxLength(255)
-                        ->helperText('Internal reference code or identifier.'),
+                        ->helperText(__('common.vehicle_code_helper')),
 
                     Forms\Components\DatePicker::make('tuv_date')
-                        ->label('TÜV Date')
+                        ->label(__('common.tuv_date'))
                         ->displayFormat('d.m.Y'),
 
                     Forms\Components\DatePicker::make('insurance_date')
-                        ->label('Insurance Date')
+                        ->label(__('common.insurance_date'))
                         ->displayFormat('d.m.Y'),
                 ])
                 ->columns(2),
@@ -106,21 +110,21 @@ class VehicleResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('license_plate')
-                    ->label('License Plate')
+                    ->label(__('common.license_plate'))
                     ->searchable()
                     ->sortable()
                     ->icon('heroicon-o-identification'),
 
                 TextColumn::make('brand')
-                    ->label('Brand')
+                    ->label(__('common.brand'))
                     ->sortable(),
 
                 TextColumn::make('model')
-                    ->label('Model')
+                    ->label(__('common.model'))
                     ->sortable(),
 
                 TextColumn::make('usage_type')
-                    ->label('Usage Type')
+                    ->label(__('common.usage_type'))
                     ->badge()
                     ->color(fn(string $state) => match ($state) {
                         'taxi' => 'success',
@@ -129,22 +133,24 @@ class VehicleResource extends Resource
                     }),
 
                 TextColumn::make('company.name')
-                    ->label('Company')
+                    ->label(__('common.company'))
                     ->visible(fn() => auth()->user()->role === 'admin'),
             ])
             ->filters([
                 SelectFilter::make('usage_type')
-                    ->label('Usage Type')
+                    ->label(__('common.usage_type'))
                     ->options([
-                        'taxi' => 'Taxi',
-                        'rent' => 'Mietwagen',
+                        'taxi' => __('common.taxi'),
+                        'rent' => __('common.rent_car'),
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->label(__('common.edit')),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\DeleteBulkAction::make()
+                    ->label(__('common.delete_selected')),
             ]);
     }
 

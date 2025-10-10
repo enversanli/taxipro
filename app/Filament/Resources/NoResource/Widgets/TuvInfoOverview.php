@@ -16,42 +16,40 @@ class TuvInfoOverview extends BaseWidget
         return $table
             ->query(
                 Vehicle::query()
-                    ->where(function ($query) {
-                        $query->whereNotNull('tuv_date');
-                    })
+                    ->whereNotNull('tuv_date')
                     ->orderBy('tuv_date', 'ASC')
                     ->limit(3)
             )
             ->columns([
                 Tables\Columns\TextColumn::make('license_plate')
-                    ->label('Plate')
+                    ->label(__('common.license_plate'))
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('tuv_date')
-                    ->label('TÜV Date')
+                    ->label(__('common.tuv_date'))
                     ->date('d M Y')
                     ->color('success'),
 
                 Tables\Columns\TextColumn::make('upcoming_tuv_date')
-                    ->label('Upcoming TÜV Date')
+                    ->label(__('common.upcoming_tuv_date'))
                     ->date('d M Y')
                     ->color('danger'),
 
                 Tables\Columns\TextColumn::make('tuv_status')
-                    ->label('Status')
+                    ->label(__('common.tuv_status'))
                     ->colors([
-                        'warning' => 'EXPIRED',
-                        'success' => 'UPCOMING',
-                        'danger' => 'SOON',
-                        'secondary' => 'UNKNOWN',
+                        'warning'   => __('common.tuv_statuses.expired'),
+                        'success'   => __('common.tuv_statuses.upcoming'),
+                        'danger'    => __('common.tuv_statuses.soon'),
+                        'secondary' => __('common.tuv_statuses.unknown'),
                     ])
                     ->extraAttributes([
                         'class' => 'font-bold',
-                    ])
+                    ]),
             ]);
     }
 
-    public function getColumnSpan(): int | string | array
+    public function getColumnSpan(): int|string|array
     {
         return 1;
     }

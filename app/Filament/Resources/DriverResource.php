@@ -3,9 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\DriverResource\Pages;
-use App\Filament\Resources\DriverResource\RelationManagers;
 use App\Filament\Resources\InvoiceRelationManagerResource\RelationManagers\DriversRelationManager;
-use App\Filament\Resources\NoResource\Widgets\TuvInfoOverview;
 use App\Models\Company;
 use App\Models\Driver;
 use Filament\Forms;
@@ -26,7 +24,6 @@ class DriverResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        //dd(app()->getLocale());
         return __('common.vehicles');
     }
 
@@ -34,31 +31,49 @@ class DriverResource extends Resource
     {
         return $form
             ->schema([
-                    auth()->user()->role === 'admin'
-                        ? Forms\Components\Select::make('company_id')
-                        ->label('Company')
-                        ->options(Company::all()->pluck('name', 'id'))
-                        ->searchable()
-                        ->required()
-                        : Forms\Components\Hidden::make('company_id')
-                        ->default(auth()->user()->company_id),
-                TextInput::make('first_name')->required(),
-                TextInput::make('last_name')->required(),
-                TextInput::make('phone')->tel(),
-                TextInput::make('email')->email(),
-                TextInput::make('address'),
+                auth()->user()->role === 'admin'
+                    ? Forms\Components\Select::make('company_id')
+                    ->label(__('common.company'))
+                    ->options(Company::all()->pluck('name', 'id'))
+                    ->searchable()
+                    ->required()
+                    : Forms\Components\Hidden::make('company_id')
+                    ->default(auth()->user()->company_id),
+
+                TextInput::make('first_name')
+                    ->label(__('common.first_name'))
+                    ->required(),
+
+                TextInput::make('last_name')
+                    ->label(__('common.last_name'))
+                    ->required(),
+
+                TextInput::make('phone')
+                    ->label(__('common.phone'))
+                    ->tel(),
+
+                TextInput::make('email')
+                    ->label(__('common.email'))
+                    ->email(),
+
+                TextInput::make('address')
+                    ->label(__('common.address')),
+
                 Select::make('work_model')
-                    ->label('Work Model')
+                    ->label(__('common.work_model'))
                     ->required()
                     ->options([
-                        'taxi' => 'Taxi',
-                        'rent' => 'Rent',
+                        'taxi' => __('common.taxi'),
+                        'rent' => __('common.rent'),
                     ]),
-                TextInput::make('provision_model'),
+
+                TextInput::make('provision_model')
+                    ->label(__('common.provision_model')),
+
                 MultiSelect::make('vehicles')
                     ->relationship('vehicles', 'license_plate')
                     ->preload()
-                    ->label('Assigned Vehicles'),
+                    ->label(__('common.assigned_vehicles')),
             ]);
     }
 
@@ -67,48 +82,49 @@ class DriverResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('first_name')
-                    ->label('First Name')
+                    ->label(__('common.first_name'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('last_name')
-                    ->label('Last Name')
+                    ->label(__('common.last_name'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('phone')
-                    ->label('Phone')
+                    ->label(__('common.phone'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('address')
-                    ->label('Address')
+                    ->label(__('common.address'))
                     ->limit(20),
 
                 TextColumn::make('email')
-                    ->label('Email')
+                    ->label(__('common.email'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('work_model')
-                    ->label('Work Model')
+                    ->label(__('common.work_model'))
                     ->badge()
                     ->color(fn (string $state) => match ($state) {
                         'taxi' => 'success',
                         'rent' => 'warning',
-                    }),
+                    })
+                    ->formatStateUsing(fn (string $state) => __("common.$state")),
 
                 TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label(__('common.created_at'))
                     ->dateTime('d.m.Y H:i')
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('work_model')
-                    ->label('Work Model')
+                    ->label(__('common.work_model'))
                     ->options([
-                        'taxi' => 'Taxi',
-                        'rent' => 'Rent',
+                        'taxi' => __('common.taxi'),
+                        'rent' => __('common.rent'),
                     ]),
             ])
             ->actions([
@@ -121,7 +137,6 @@ class DriverResource extends Resource
                 ]),
             ]);
     }
-
 
     public static function getRelations(): array
     {

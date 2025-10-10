@@ -3,20 +3,17 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\Company;
 use App\Models\User;
 use App\Traits\AdminRoleTrait;
 use Filament\Forms;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
 
 class UserResource extends Resource
 {
@@ -25,44 +22,53 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user';
-    protected static ?string $navigationLabel = 'Users';
-    protected static ?string $navigationGroup = 'Management';
+
+    public static function getNavigationLabel(): string
+    {
+        return __('common.users');
+    }
+
+    public static function getNavigationGroup(): string
+    {
+        return __('common.management');
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('company_id')
-                    ->label('Company')
+                Select::make('company_id')
+                    ->label(__('common.company'))
                     ->options(Company::all()->pluck('name', 'id'))
                     ->searchable(),
+
                 Select::make('role')
+                    ->label(__('common.role'))
                     ->options([
-                        'admin' => 'Admin',
-                        'partner' => 'Partner',
-                        'driver' => 'Driver',
-                    ])
-                    ->label('Role'),
+                        'admin' => __('common.admin'),
+                        'partner' => __('common.partner'),
+                        'driver' => __('common.driver'),
+                    ]),
 
                 TextInput::make('first_name')
-                    ->required()
-                    ->maxLength(255),
+                    ->label(__('common.first_name'))
+                    ->required(),
 
                 TextInput::make('last_name')
-                    ->required()
-                    ->maxLength(255),
+                    ->label(__('common.last_name'))
+                    ->required(),
 
                 TextInput::make('email')
+                    ->label(__('common.email'))
                     ->email()
                     ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(255),
+                    ->unique(ignoreRecord: true),
 
                 TextInput::make('password')
                     ->password()
-                    ->label('Password')
+                    ->label(__('common.password'))
                     ->dehydrateStateUsing(fn ($state) => filled($state) ? bcrypt($state) : null)
-                    ->required(fn ($livewire) => $livewire instanceof Pages\CreateUser)
-                    ->maxLength(255),
+                    ->required(fn ($livewire) => $livewire instanceof Pages\CreateUser),
             ]);
     }
 
@@ -70,31 +76,43 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('first_name')->searchable()->sortable(),
-                TextColumn::make('last_name')->searchable()->sortable(),
-                TextColumn::make('email')->searchable()->sortable(),
-                TextColumn::make('role')->badge()->sortable(),
-                TextColumn::make('created_at')->label('Registered')->dateTime()->sortable(),
-            ])
-            ->filters([
-                //
+                TextColumn::make('first_name')
+                    ->label(__('common.first_name'))
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('last_name')
+                    ->label(__('common.last_name'))
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('email')
+                    ->label(__('common.email'))
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('role')
+                    ->label(__('common.role'))
+                    ->badge()
+                    ->sortable(),
+
+                TextColumn::make('created_at')
+                    ->label(__('common.registered'))
+                    ->dateTime('d.m.Y H:i')
+                    ->sortable(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->label(__('common.edit')),
+                Tables\Actions\DeleteAction::make()
+                    ->label(__('common.delete')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label(__('common.delete_selected')),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
     }
 
     public static function getPages(): array

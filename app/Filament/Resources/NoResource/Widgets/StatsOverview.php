@@ -40,27 +40,34 @@ class StatsOverview extends BaseWidget
         }
 
         $cards = [
-            Card::make('Drivers', $driversQuery->count())
-                ->description('Your Total Driver')
+            Card::make(__('common.drivers'), $driversQuery->count())
+                ->description(__('common.total_drivers'))
                 ->icon('heroicon-o-user')
                 ->color('primary'),
 
-            Card::make('Invoices', $invoicesQuery->count())
+            Card::make(__('common.invoices'), $invoicesQuery->count())
                 ->icon('heroicon-o-document-text')
-                ->description('Your Total Invoices')
+                ->description(__('common.total_invoices'))
                 ->color('danger'),
 
-            Card::make('Vehicles', $vehiclesQuery->count())
+            Card::make(__('common.vehicles'), $vehiclesQuery->count())
                 ->color('success')
                 ->icon('heroicon-o-truck')
-                ->description('Your Total Vehicles'),
+                ->description(__('common.total_vehicles')),
         ];
 
         if (auth()->user()->isAdmin()) {
-            $cards[] = Card::make('Companies', $companiesQuery->count())
+            $cards[] = Card::make(__('common.companies'), $companiesQuery->count())
                 ->icon('heroicon-o-building-office')
                 ->color('warning')
-                ->description('Total Companies');
+                ->description(__('common.total_companies'));
+        }
+
+        if (auth()->user()->isAdmin()) {
+            $cards[] = Card::make(__('common.companies'), $companiesQuery->count())
+                ->icon('heroicon-o-building-office')
+                ->color('warning')
+                ->description(__('common.total_companies'));
         }
 
         return $cards;

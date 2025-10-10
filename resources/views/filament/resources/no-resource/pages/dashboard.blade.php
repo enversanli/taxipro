@@ -5,12 +5,12 @@
 
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <x-filament::card>
-            <h2 class="text-lg font-bold">Welcome to Taxi Pro Admin</h2>
-            <p>Here you can manage listings, users, and settings.</p>
+            <h2 class="text-lg font-bold">{{ __('common.welcome_title') }}</h2>
+            <p>{{ __('common.welcome_desc') }}</p>
         </x-filament::card>
         <x-filament::card>
-            <h2 class="text-lg font-bold">Manage Your Drivers</h2>
-            <p>Accounting very easy now!</p>
+            <h2 class="text-lg font-bold">{{ __('common.drivers_title') }}</h2>
+            <p>{{ __('common.drivers_desc') }}</p>
         </x-filament::card>
     </div>
 </x-filament-panels::page>
