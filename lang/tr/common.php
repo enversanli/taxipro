@@ -149,4 +149,16 @@ return [
     'welcome_desc' => 'Buradan ilanları, kullanıcıları ve ayarları yönetebilirsiniz.',
     'drivers_title' => 'Sürücülerinizi Yönetin',
     'drivers_desc' => 'Muhasebe artık çok kolay!',
+
+    'expired' => 'Süresi Dolmuş',
+    'soon' => 'Yakında',
+    'upcoming' => 'Yaklaşan',
+    'unknown' => 'Bilinmiyor',
+
+    'export' => 'Dışa Aktar',
+    'download_pdf' => 'PDF İndir',
+    'view_pdf' => 'PDF Görüntüle',
+    'send_via_whatsapp' => 'WhatsApp ile Gönder',
+    'pdf_actions' => 'PDF İşlemleri',
+    'invoice_message' => "Faturanızı PDF olarak buradan görüntüleyebilirsiniz:\n:url",
 ];

@@ -28,6 +28,11 @@ class InvoiceResource extends Resource
     protected static ?string $navigationLabel = 'Invoices';
     protected static ?string $pluralModelLabel = 'Invoices';
 
+    public static function getPluralModelLabel(): string
+    {
+        return __('common.invoices');
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return __('common.invoices');
@@ -195,6 +200,53 @@ class InvoiceResource extends Resource
                 Tables\Filters\SelectFilter::make('driver_id')
                     ->label(__('common.driver'))
                     ->relationship('driver', 'first_name'),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('export')
+                        ->label(__('common.export'))
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                            $service = app(InvoiceExportService::class);
+                            return $service->exportSingle($record->id);
+                        }),
+
+                    Tables\Actions\Action::make('download_pdf')
+                        ->label(__('common.download_pdf'))
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('success')
+                        ->action(fn ($record) => app(\App\Services\InvoiceExportService::class)->displaySingle($record->id)),
+
+                    Tables\Actions\Action::make('view_pdf')
+                        ->label(__('common.view_pdf'))
+                        ->icon('heroicon-o-eye')
+                        ->color('primary')
+                        ->url(fn ($record) => route('invoices.pdf', ['id' => $record->id, 'view' => 'browser']))
+                        ->openUrlInNewTab(),
+
+                    Tables\Actions\Action::make('send_whatsapp')
+                        ->label(__('common.send_via_whatsapp'))
+                        ->icon('heroicon-o-chat-bubble-oval-left-ellipsis')
+                        ->color('success')
+                        ->url(fn ($record) => 'https://wa.me/?text=' . urlencode(
+                                __("common.invoice_message", [
+                                    'url' => route('invoices.pdf', ['id' => $record->id, 'view' => 'browser'])
+                                ])
+                            ))
+                        ->openUrlInNewTab(),
+                ])
+                    ->label(__('common.pdf_actions'))
+        ])
+
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
             ]);
     }
 

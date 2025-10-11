@@ -15,9 +15,16 @@ class VoucherResource extends Resource
     protected static ?string $model = Voucher::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-ticket';
-    protected static ?string $navigationLabel = 'taxi_vouchers';
-    protected static ?string $pluralLabel = 'taxi_vouchers';
-    protected static ?string $modelLabel = 'taxi_voucher';
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('common.taxi_vouchers');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('common.taxi_voucher');
+    }
 
     public static function getNavigationGroup(): ?string
     {

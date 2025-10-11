@@ -63,13 +63,6 @@ class StatsOverview extends BaseWidget
                 ->description(__('common.total_companies'));
         }
 
-        if (auth()->user()->isAdmin()) {
-            $cards[] = Card::make(__('common.companies'), $companiesQuery->count())
-                ->icon('heroicon-o-building-office')
-                ->color('warning')
-                ->description(__('common.total_companies'));
-        }
-
         return $cards;
     }
 

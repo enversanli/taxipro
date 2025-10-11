@@ -71,21 +71,21 @@ class Vehicle extends Model
     private function getStatus($date): string
     {
         if (!$date) {
-            return 'UNKNOWN';
+            return __('common.unknown');
         }
 
         $date = Carbon::parse($date)->addYear();
         $now = Carbon::now();
 
-        if ($date->format('Y-m-d') < $now->format('Y-m-d')) {
-            return 'EXPIRED';
+        if ($date->isBefore($now)) {
+            return __('common.expired');
         }
 
         if ($date->between($now->copy()->subDay(), $now->copy()->addMonths(2))) {
-            return 'SOON';
+            return __('common.soon');
         }
 
-        return 'UPCOMING';
+        return __('common.upcoming');
     }
 
 

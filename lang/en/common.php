@@ -144,4 +144,16 @@ return [
     'welcome_desc' => 'Here you can manage listings, users, and settings.',
     'drivers_title' => 'Manage Your Drivers',
     'drivers_desc' => 'Accounting very easy now!',
+
+    'expired' => 'Expired',
+    'soon' => 'Soon',
+    'upcoming' => 'Upcoming',
+    'unknown' => 'Unknown',
+
+    'export' => 'Export',
+    'download_pdf' => 'Download PDF',
+    'view_pdf' => 'View PDF',
+    'send_via_whatsapp' => 'Send via WhatsApp',
+    'pdf_actions' => 'PDF Actions',
+    'invoice_message' => "Here is your invoice PDF:\n:url",
 ];

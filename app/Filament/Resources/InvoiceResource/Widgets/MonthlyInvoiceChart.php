@@ -16,14 +16,6 @@ class MonthlyInvoiceChart extends ChartWidget
     public ?string $month = null;
     public ?int $driver_id = null;
 
-    public function updateFilters($filters)
-    {
-        $this->month = $filters['month'] ?? null;
-        $this->driver_id = $filters['driver_id'] ?? null;
-
-        $this->resetChartData(); // Rebuild chart data dynamically
-    }
-
     protected function getData(): array
     {
         $query = Invoice::select(
@@ -37,7 +29,6 @@ class MonthlyInvoiceChart extends ChartWidget
             ->groupBy('month')
             ->orderBy('month');
 
-        // 🔹 Apply filters dynamically
         if ($this->month) {
             $query->where('month', $this->month);
         }

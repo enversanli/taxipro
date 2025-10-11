@@ -150,4 +150,16 @@ return [
     'welcome_desc' => 'Hier können Sie Listings, Benutzer und Einstellungen verwalten.',
     'drivers_title' => 'Verwalten Sie Ihre Fahrer',
     'drivers_desc' => 'Buchhaltung jetzt sehr einfach!',
+
+    'expired' => 'Abgelaufen',
+    'soon' => 'Bald',
+    'upcoming' => 'Bevorstehend',
+    'unknown' => 'Unbekannt',
+
+    'export' => 'Exportieren',
+    'download_pdf' => 'PDF Herunterladen',
+    'view_pdf' => 'PDF Ansehen',
+    'send_via_whatsapp' => 'Per WhatsApp Senden',
+    'pdf_actions' => 'PDF-Aktionen',
+    'invoice_message' => "Hier ist Ihre Rechnung als PDF:\n:url",
 ];
