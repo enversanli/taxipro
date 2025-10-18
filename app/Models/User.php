@@ -58,4 +58,9 @@ class User extends Authenticatable
         return "{$this->first_name} {$this->last_name}";
     }
 
+    public function canAccessPanel(\Filament\Panel $panel): bool
+    {
+        return true;
+    }
+
 }
