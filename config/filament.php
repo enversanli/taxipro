@@ -2,7 +2,7 @@
 
 return [
 
-    'locale' => fn () => session('locale', config('app.locale')),
+    'locale' => env('FILAMENT_LOCALE', config('app.locale')),
 
     /*
     |--------------------------------------------------------------------------
