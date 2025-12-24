@@ -33,7 +33,6 @@ class InvoiceResource extends Resource
         return $form
             ->columns(3)
             ->schema([
-                // --- SOL TARAF: VERİ GİRİŞ ALANLARI ---
                 Group::make()
                     ->columnSpan(2)
                     ->schema([
@@ -41,55 +40,56 @@ class InvoiceResource extends Resource
                             ->icon('heroicon-o-user')
                             ->columns(2)
                             ->schema([
+                                // Admin değilse şirket seçimini gizle
                                 auth()->user()->role === 'admin'
                                     ? Select::make('company_id')
                                     ->label(__('common.company'))
                                     ->options(Company::all()->pluck('name', 'id'))
-                                    ->searchable()->required()
+                                    ->required()
                                     : Hidden::make('company_id')->default(auth()->user()->company_id),
 
                                 Select::make('driver_id')
                                     ->label(__('common.driver'))
                                     ->relationship('driver', 'first_name')
                                     ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->first_name} {$record->last_name}")
-                                    ->searchable()->preload()->required(),
+                                    ->required()
+                                    ->live()
+                                    // Şoför seçildiğinde Driver modelindeki varsayılan yüzdeyi getir
+                                    ->afterStateUpdated(fn ($state, Set $set) =>
+                                    $set('salary_percentage', \App\Models\Driver::find($state)?->default_percentage ?? 50)
+                                    ),
 
-                                Group::make()->columns(2)->schema([
+                                Grid::make(2)->schema([
                                     Select::make('month')
                                         ->label(__('common.month'))
                                         ->options(fn () => __('common.months'))
                                         ->required(),
+
                                     TextInput::make('year')
                                         ->label(__('common.year'))
                                         ->default(now()->format('Y'))
-                                        ->disabled()->dehydrated()->required(),
-                                ])->columnSpan(1),
+                                        ->required(),
+                                ]),
                             ]),
 
                         Section::make(__('common.invoice_detail'))
-                            ->description('Platform bazlı kazançlar (Uber, Bolt vb.)')
                             ->icon('heroicon-o-list-bullet')
                             ->schema([
                                 HasManyRepeater::make('details')
                                     ->relationship('details')
                                     ->collapsible()
                                     ->collapsed()
-                                    ->itemLabel(function (array $state): ?string {
-                                        if (!isset($state['platform'])) return __('common.detail');
-                                        $label = ucfirst($state['platform']);
-                                        if ($state['platform'] === 'uber' && !empty($state['week_number'])) {
-                                            $label .= " - {$state['week_number']}. " . __('common.week');
-                                        }
-                                        return $label;
-                                    })
-                                    ->live()
-                                    ->afterStateUpdated(fn (?array $state, Set $set, Get $get) => self::calculateMainMetrics($state, $set, $get))
+                                    ->cloneable() // Kullanıcılar haftalık Uber verilerini kopyalamayı sever
+                                    ->itemLabel(fn ($state) => self::getRepeaterLabel($state))
+                                    ->live() // Her satır hareketinde ana metrikleri güncelle
+                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($set, $get))
                                     ->schema([
                                         Grid::make(3)->schema([
                                             Select::make('platform')
                                                 ->label(__('common.platform'))
                                                 ->options(['uber' => 'Uber', 'bolt' => 'Bolt', 'bliq' => 'Bliq', 'freenow' => 'Free Now'])
-                                                ->required()->live()
+                                                ->required()
+                                                ->live()
                                                 ->afterStateUpdated(function (Set $set, Get $get) {
                                                     if ($get('platform') !== 'uber') $set('week_number', null);
                                                     self::calculateDetailItemMetrics($set, $get);
@@ -97,7 +97,7 @@ class InvoiceResource extends Resource
 
                                             Select::make('week_number')
                                                 ->label(__('common.week'))
-                                                ->options([1 => '1. Hafta', 2 => '2. Hafta', 3 => '3. Hafta', 4 => '4. Hafta', 5 => '5. Hafta'])
+                                                ->options([1=>'1.Woche', 2=>'2.Woche', 3=>'3.Woche', 4=>'4.Woche', 5=>'5.Woche'])
                                                 ->visible(fn (Get $get) => $get('platform') === 'uber')
                                                 ->required(fn (Get $get) => $get('platform') === 'uber'),
 
@@ -109,6 +109,7 @@ class InvoiceResource extends Resource
                                             TextInput::make('cash_collected_by_driver')
                                                 ->label(__('common.bar'))
                                                 ->numeric()->prefix('€')->default(0)->live(onBlur: true)
+                                                ->maxValue(fn (Get $get) => (float) $get('gross_amount')) // Validasyon: Nakit > Brüt olamaz
                                                 ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateDetailItemMetrics($set, $get)),
 
                                             TextInput::make('tip')
@@ -118,62 +119,65 @@ class InvoiceResource extends Resource
 
                                             TextInput::make('net_payout')
                                                 ->label(__('common.net'))
-                                                ->readOnly()->prefix('€')->extraInputAttributes(['class' => 'bg-gray-50']),
+                                                ->readOnly()->prefix('€')->extraInputAttributes(['class' => 'bg-gray-100 font-medium']),
                                         ]),
                                     ]),
                             ]),
                     ]),
 
-                // --- SAĞ TARAF: ÖZET VE KASA KONTROLÜ ---
+                // --- SAĞ TARAF: ÖZET VE SONUÇLAR ---
                 Group::make()
                     ->columnSpan(1)
                     ->schema([
-                        Section::make(__('Kasa Kontrolü (Barbestand)'))
+                        Section::make(__('Kasa & Mutabakat'))
+                            ->description('Barbestand hesabı')
                             ->icon('heroicon-o-banknotes')
                             ->schema([
                                 TextInput::make('taxameter_total')
-                                    ->label(__('common.taximetre_total')) // Genel Kasa (Taksimetre)
+                                    ->label(__('common.taximetre_total'))
                                     ->numeric()->prefix('€')->required()->live(onBlur: true)
-                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($get('details'), $set, $get)),
+                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
 
                                 TextInput::make('sumup_payments')
-                                    ->label('SumUp (Kartlı Ödemeler)')
+                                    ->label('SumUp / Kart')
                                     ->numeric()->prefix('€')->default(0)->live(onBlur: true)
-                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($get('details'), $set, $get)),
+                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
 
                                 TextInput::make('coupon_payments')
-                                    ->label('Kupon/Cari Sürüşler') // Rechnungsfahrten
+                                    ->label('Kupon / Cari')
                                     ->numeric()->prefix('€')->default(0)->live(onBlur: true)
-                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($get('details'), $set, $get)),
+                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
 
                                 TextInput::make('expected_cash')
-                                    ->label(__('common.expected_cash')) // Teslim Edilmesi Gereken Nakit
-                                    ->readOnly()->prefix('€')
-                                    ->extraInputAttributes(['class' => 'text-right text-xl font-bold text-danger-600 bg-danger-50']),
+                                    ->label(__('common.expected_cash'))
+                                    ->readOnly()
+                                    ->prefix('€')
+                                    ->extraInputAttributes(['class' => 'text-right text-2xl font-bold text-danger-600 bg-danger-50']),
                             ]),
 
-                        Section::make(__('Sürücü Maaş Hesabı'))
+                        Section::make(__('Hakediş & Kesintiler'))
                             ->icon('heroicon-o-calculator')
                             ->schema([
                                 TextInput::make('salary_percentage')
-                                    ->label('Maaş Oranı (%)')
-                                    ->default(50)->numeric()->live(onBlur: true)
-                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($get('details'), $set, $get)),
+                                    ->label('Maaş Oranı %')
+                                    ->numeric()->default(50)->live(onBlur: true)
+                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
 
                                 TextInput::make('deductions_sb')
-                                    ->label(__('common.deductions_sb')) // Hasar Kesintisi (SB)
+                                    ->label('SB (Sigorta Muafiyet)')
                                     ->numeric()->prefix('€')->default(0)->live(onBlur: true)
-                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($get('details'), $set, $get)),
+                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
 
                                 TextInput::make('cash_withdrawals')
-                                    ->label('Alınan Avanslar') // Barentnahmen
+                                    ->label('Ay İçi Avanslar')
                                     ->numeric()->prefix('€')->default(0)->live(onBlur: true)
-                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($get('details'), $set, $get)),
+                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
 
                                 TextInput::make('net_salary')
                                     ->label(__('common.driver_salary'))
-                                    ->readOnly()->prefix('€')
-                                    ->extraInputAttributes(['class' => 'text-right text-xl font-bold text-success-600 bg-success-50']),
+                                    ->readOnly()
+                                    ->prefix('€')
+                                    ->extraInputAttributes(['class' => 'text-right text-2xl font-bold text-success-600 bg-success-50']),
                             ]),
                     ]),
             ]);
@@ -199,38 +203,41 @@ class InvoiceResource extends Resource
     }
 
     // --- HESAPLAMA MANTIKLARI ---
-
-    protected static function calculateMainMetrics(?array $state, Set $set, Get $get): void
+    protected static function getRepeaterLabel($state): string
     {
-        $taxameter = (float)($get('taxameter_total') ?? 0);
-        $sumup = (float)($get('sumup_payments') ?? 0);
-        $coupons = (float)($get('coupon_payments') ?? 0);
-        $withdrawals = (float)($get('cash_withdrawals') ?? 0);
+        if (!isset($state['platform'])) return __('common.detail');
+        $label = ucfirst($state['platform']);
+        if ($state['platform'] === 'uber' && !empty($state['week_number'])) {
+            $label .= " ({$state['week_number']}. Woche)";
+        }
+        return $label;
+    }
 
+    protected static function calculateMainMetrics(Set $set, Get $get): void
+    {
+        $taxameter = (float) $get('taxameter_total');
+        $sumup = (float) $get('sumup_payments');
+        $coupons = (float) $get('coupon_payments');
+        $withdrawals = (float) $get('cash_withdrawals');
+
+        $details = $get('details') ?? [];
         $totalAppGross = 0;
         $totalAppBar = 0;
 
-        if ($state) {
-            foreach ($state as $item) {
-                $totalAppGross += (float)($item['gross_amount'] ?? 0);
-                $totalAppBar += (float)($item['cash_collected_by_driver'] ?? 0);
-            }
+        foreach ($details as $item) {
+            $totalAppGross += (float) ($item['gross_amount'] ?? 0);
+            $totalAppBar += (float) ($item['cash_collected_by_driver'] ?? 0);
         }
 
-        // --- 1. KASA HESABI (Barbestand / Ermitteltes Bargeld) ---
-        // Uygulama üzerinden kartla ödenen miktar = Toplam Brüt - Şoförün Nakit Aldığı
+        // Kasa Hesabı: Taksimetre - (App Kartlılar) - Sumup - Kupon - Avans
         $appDigitalPayments = $totalAppGross - $totalAppBar;
-
-        // Formül: Taksimetre - Uygulama Kartlıları - SumUp - Kuponlar - Avanslar
         $expectedCash = $taxameter - $appDigitalPayments - $sumup - $coupons - $withdrawals;
 
-        // --- 2. MAAŞ HESABI (Lohnabrechnung) ---
-        $sb = (float)($get('deductions_sb') ?? 0);
-        $percentage = (int)($get('salary_percentage') ?? 50);
-
-        // Toplam ciro üzerinden yüzde hesaplanır
-        $totalGrossForSalary = $taxameter + $totalAppGross;
-        $salary = ($totalGrossForSalary * ($percentage / 100)) - $sb;
+        // Maaş Hesabı
+        $percentage = (int) $get('salary_percentage');
+        $sb = (float) $get('deductions_sb');
+        $totalGross = $taxameter + $totalAppGross;
+        $salary = ($totalGross * ($percentage / 100)) - $sb;
 
         $set('expected_cash', round($expectedCash, 2));
         $set('net_salary', round($salary, 2));
@@ -239,15 +246,13 @@ class InvoiceResource extends Resource
     protected static function calculateDetailItemMetrics(Set $set, Get $get): void
     {
         $platform = $get('platform');
-        $gross = (float)($get('gross_amount') ?? 0);
+        $gross = (float) $get('gross_amount');
 
-        // Komisyon oranları (Berlin Standardı)
-        $rates = ['uber' => 0.25, 'bolt' => 0.20, 'freenow' => 0.15, 'bliq' => 0.15];
+        $rates = ['uber' => 0.25, 'bolt' => 0.20, 'bliq' => 0.15, 'freenow' => 0.15];
         $rate = $rates[$platform] ?? 0.20;
 
         $set('net_payout', round($gross * (1 - $rate), 2));
     }
-
     public static function getPages(): array
     {
         return [
