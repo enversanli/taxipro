@@ -21,7 +21,7 @@ class DriverFactory extends Factory
     public function definition(): array
     {
         return [
-            'company_id' => Company::skip(1)->first()->id,
+            'company_id' => Company::first()->id,
             'first_name' => fake()->firstName,
             'last_name' => fake()->lastName,
             'phone' => fake()->phoneNumber,

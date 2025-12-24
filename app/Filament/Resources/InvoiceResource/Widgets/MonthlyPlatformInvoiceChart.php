@@ -8,56 +8,55 @@ use Illuminate\Support\Facades\DB;
 
 class MonthlyPlatformInvoiceChart extends ChartWidget
 {
-    protected static ?string $heading = 'Chart';
+    protected static ?string $heading = 'Aylık Platform Gelir Analizi';
 
     protected function getData(): array
     {
+        // ÖNEMLİ: Sorguda sadece var olan yeni sütun isimlerini kullanıyoruz.
+        // SQL hatasını önlemek için alias (takma isim) kullanılmıştır.
         $invoiceDetails = DB::table('invoice_details')
             ->join('invoices', 'invoice_details.invoice_id', '=', 'invoices.id')
-            // cast month to integer so '08' and '8' match
             ->select(
-                DB::raw('CAST(invoices.month AS INTEGER) as month'),
+                DB::raw('CAST(invoices.month AS INTEGER) as month_int'),
                 'invoice_details.platform',
-                DB::raw('SUM(invoice_details.gross) as gross_total'),
-                DB::raw('SUM(invoice_details.net) as net_total'),
-                DB::raw('SUM(invoice_details.cash) as cash_total'),
-                DB::raw('SUM(invoice_details.tip) as tip_total'),
-                DB::raw('SUM(invoice_details.bar) as bar_total')
+                // Yeni migration sütunları burada toplanıyor
+                DB::raw('SUM(invoice_details.gross_amount) as total_gross'),
+                DB::raw('SUM(invoice_details.net_payout) as total_net'),
+                DB::raw('SUM(invoice_details.cash_collected_by_driver) as total_cash')
             )
-            ->groupBy('month', 'invoice_details.platform')
-            ->orderBy('month')
+            ->groupBy('month_int', 'invoice_details.platform')
+            ->orderBy('month_int')
             ->get();
 
-        // labels: Jan ... Dec
+        // Grafik etiketleri: Jan ... Dec
         $labels = collect(range(1, 12))
-            ->map(fn($m) => Carbon::createFromFormat('!m', $m)->format('M'))
+            ->map(fn($m) => Carbon::createFromFormat('!m', $m)->translatedFormat('M'))
             ->toArray();
 
         $platforms = ['uber', 'bolt', 'bliq', 'freenow'];
 
-        // nice palette for the platforms
         $palette = [
-            '#3b82f6', // blue - uber
-            '#ef4444', // red  - bolt
-            '#10b981', // green - bliq
-            '#f59e0b', // amber - freenow
+            '#3b82f6', // Uber - Mavi
+            '#10b981', // Bolt - Yeşil
+            '#f59e0b', // Bliq - Turuncu
+            '#ef4444', // Free Now - Kırmızı
         ];
 
         $datasets = [];
 
         foreach ($platforms as $index => $platform) {
-            // key by integer month for fast lookups
+            // Ay bazlı veriyi hızlıca çekmek için keyBy kullanıyoruz
             $rows = $invoiceDetails
                 ->where('platform', $platform)
-                ->keyBy(fn($r) => (int) $r->month);
+                ->keyBy(fn($r) => (int) $r->month_int);
 
             $data = [];
             foreach (range(1, 12) as $m) {
-                // $rows[$m] will be null if no data -> 0
-                $data[] = isset($rows[$m]) ? (float) $rows[$m]->gross_total : 0;
+                // Eğer o ay için veri yoksa 0 döndür
+                $data[] = isset($rows[$m]) ? (float) $rows[$m]->total_gross : 0;
             }
 
-            $color = $palette[$index] ?? sprintf('#%06X', mt_rand(0, 0xFFFFFF));
+            $color = $palette[$index] ?? '#cccccc';
 
             $datasets[] = [
                 'label' => ucfirst($platform),
@@ -65,7 +64,7 @@ class MonthlyPlatformInvoiceChart extends ChartWidget
                 'borderColor' => $color,
                 'backgroundColor' => $this->hexToRgba($color, 0.15),
                 'fill' => true,
-                'tension' => 0.2,
+                'tension' => 0.4, // Daha yumuşak hatlı çizgiler
             ];
         }
 
@@ -76,23 +75,20 @@ class MonthlyPlatformInvoiceChart extends ChartWidget
     }
 
     /**
-     * Helper to convert hex to rgba string for backgroundColor
+     * Renklerin şeffaf arka planı için yardımcı fonksiyon
      */
     protected function hexToRgba(string $hex, float $alpha = 1.0): string
     {
         $hex = ltrim($hex, '#');
-
         if (strlen($hex) === 3) {
             $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
         }
-
         $r = hexdec(substr($hex, 0, 2));
         $g = hexdec(substr($hex, 2, 2));
         $b = hexdec(substr($hex, 4, 2));
 
         return "rgba({$r}, {$g}, {$b}, {$alpha})";
     }
-
 
     protected function getType(): string
     {

@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'summary' => 'Zusammenfassung',
     'first_name' => 'Vorname',
     'last_name' => 'Nachname',
     'name' => 'Name',
@@ -24,19 +25,23 @@ return [
     'usage_type' => 'Nutzungstyp',
     'color' => 'Farbe',
 
+    'expected_cash' => 'Barbestand',
+    'deductions_sb' => 'Abzüge SB',
     'tip' => 'Trinkgeld',
     'bar' => 'Bar',
     'net' => 'Netto',
     'gross' => 'Brutto',
-    'cash' => 'Bargeld',
+    'cash' => 'Bar (Cash)',
     'platform' => 'Plattform',
     'total_income' => 'Gesamteinnahmen',
     'total_gross' => 'Brutto',
     'driver_salary' => 'Fahrergehalt',
     'address' => 'Adresse',
     'phone' => 'Telefon',
+    'taximetre_total' => 'Taxameter Total',
 
     'year' => 'Jahr',
+    'week' => 'Woche',
     'month' => 'Monat',
     'months' => [
         '01' => 'Januar',

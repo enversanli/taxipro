@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'summary' => 'Özet',
     'first_name' => 'Ad',
     'last_name' => 'Soyad',
     'name' => 'İsim',
@@ -24,6 +25,8 @@ return [
     'usage_type' => 'Kullanım Türü',
     'color' => 'Renk',
 
+    'expected_cash' => 'Eldeki Nakit',
+    'deductions_sb' => 'Kesintiler',
     'tip' => 'Bahşiş',
     'bar' => 'Bar',
     'net' => 'Net',
@@ -35,8 +38,10 @@ return [
     'driver_salary' => 'Sürücü Maaşı',
     'address' => 'Adres',
     'phone' => 'Telefon',
+    'taximetre_total' => 'Taksimetre Toplamı',
 
     'year' => 'Yıl',
+    'week' => 'Hafta',
     'month' => 'Ay',
     'months' => [
         '01' => 'Ocak',

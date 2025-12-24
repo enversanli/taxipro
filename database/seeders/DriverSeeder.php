@@ -14,7 +14,7 @@ class DriverSeeder extends Seeder
     public function run(): void
     {
         Driver::create([
-            'company_id' => Company::skip(1)->first()->id,
+            'company_id' => Company::first()->id,
             'first_name' => 'Test Driver',
             'last_name' => fake()->lastName,
             'phone' => fake()->phoneNumber,

@@ -5,7 +5,6 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Models\Company;
 use App\Models\Invoice;
-use Facades\App\Services\InvoiceCalculateService;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\HasManyRepeater;
@@ -13,7 +12,6 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\ViewField;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -25,27 +23,17 @@ use Filament\Forms\Get;
 class InvoiceResource extends Resource
 {
     protected static ?string $model = Invoice::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-currency-euro';
-    protected static ?string $navigationLabel = 'Invoices';
-    protected static ?string $pluralModelLabel = 'Invoices';
 
-    public static function getPluralModelLabel(): string
-    {
-        return __('common.invoices');
-    }
-
-    public static function getNavigationGroup(): ?string
-    {
-        return __('common.invoices');
-    }
+    public static function getPluralModelLabel(): string { return __('common.invoices'); }
+    public static function getNavigationGroup(): ?string { return __('common.invoices'); }
 
     public static function form(Form $form): Form
     {
         return $form
-            ->columns(3) // Create a 3-column grid for the layout
+            ->columns(3)
             ->schema([
-                // --- LEFT SIDE: INPUTS (Takes up 2 of 3 columns) ---
+                // --- SOL TARAF: GİRİŞ ALANLARI ---
                 Group::make()
                     ->columnSpan(2)
                     ->schema([
@@ -57,170 +45,129 @@ class InvoiceResource extends Resource
                                     ? Select::make('company_id')
                                     ->label(__('common.company'))
                                     ->options(Company::all()->pluck('name', 'id'))
-                                    ->searchable()
-                                    ->required()
-                                    : Hidden::make('company_id')
-                                    ->default(auth()->user()->company_id),
+                                    ->searchable()->required()
+                                    : Hidden::make('company_id')->default(auth()->user()->company_id),
 
                                 Select::make('driver_id')
                                     ->label(__('common.driver'))
                                     ->relationship('driver', 'first_name')
                                     ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->first_name} {$record->last_name}")
-                                    ->searchable()
-                                    ->preload()
-                                    ->required(),
+                                    ->searchable()->preload()->required(),
 
                                 Group::make()->columns(2)->schema([
                                     Select::make('month')
                                         ->label(__('common.month'))
                                         ->options(fn () => __('common.months'))
-                                        ->searchable()
                                         ->required(),
-
                                     TextInput::make('year')
                                         ->label(__('common.year'))
                                         ->default(now()->format('Y'))
-                                        ->disabled()
-                                        ->dehydrated()
-                                        ->required(),
+                                        ->disabled()->dehydrated()->required(),
                                 ])->columnSpan(1),
                             ]),
 
                         Section::make(__('common.invoice_detail'))
-                            ->description('Add earnings for each platform below.')
                             ->icon('heroicon-o-list-bullet')
                             ->schema([
                                 HasManyRepeater::make('details')
                                     ->relationship('details')
-                                    // Make it behave like an accordion/popup to save space
                                     ->collapsible()
-                                    ->cloneable()
-                                    ->itemLabel(fn (array $state): ?string => isset($state['platform']) ? ucfirst($state['platform']) : __('common.detail'))
-                                    ->createItemButtonLabel(__('common.add_detail'))
-                                    ->grid(1) // Stack them vertically for a cleaner look
-                                    ->reactive()
-                                    // Update MAIN totals when repeater changes (add/remove)
-                                    ->afterStateUpdated(fn (?array $state, Set $set) => self::calculateMainMetrics($state, $set))
-                                    ->afterStateHydrated(fn (?array $state, Set $set) => self::calculateMainMetrics($state, $set))
+                                    ->collapsed()
+                                    ->itemLabel(function (array $state): ?string {
+                                        if (!isset($state['platform'])) {
+                                            return __('common.detail');
+                                        }
+
+                                        $label = ucfirst($state['platform']);
+
+                                        // Eğer platform uber ise ve hafta seçilmişse yanına ekle
+                                        if ($state['platform'] === 'uber' && !empty($state['week_number'])) {
+                                            $label .= " - {$state['week_number']}. " . __('common.week');
+                                        }
+
+                                        return $label;
+                                    })                                    ->live()
+                                    ->afterStateUpdated(fn (?array $state, Set $set, Get $get) => self::calculateMainMetrics($state, $set, $get))
                                     ->schema([
-                                        Group::make()->columns(2)->schema([
+                                        Grid::make(3)->schema([
                                             Select::make('platform')
                                                 ->label(__('common.platform'))
-                                                ->options([
-                                                    'uber' => 'Uber',
-                                                    'bolt' => 'Bolt',
-                                                    'bliq' => 'Bliq',
-                                                    'freenow' => 'Free Now',
-                                                ])
-                                                ->required()
-                                                ->searchable()
-                                                ->live(debounce: '500ms')
-                                                ->afterStateUpdated(fn (Set $set, Get $get, ?string $state) => self::calculateDetailItemMetrics($set, $get, $state)),
+                                                ->options(['uber' => 'Uber', 'bolt' => 'Bolt', 'bliq' => 'Bliq', 'freenow' => 'Free Now'])
+                                                ->required()->live()
+                                                ->afterStateUpdated(function (Set $set, Get $get) {
+                                                    if ($get('platform') !== 'uber') {
+                                                        $set('week_number', null);
+                                                    }
+                                                    self::calculateDetailItemMetrics($set, $get);
+                                                }),
 
-                                            TextInput::make('gross')
+                                            Select::make('week_number')
+                                                ->label(__('common.week'))
+                                                ->options([
+                                                    1 => '1. ' . __('common.week'),
+                                                    2 => '2. ' . __('common.week'),
+                                                    3 => '3. ' . __('common.week'),
+                                                    4 => '4. ' . __('common.week'),
+                                                    5 => '5. ' . __('common.week'),
+                                                ])
+                                                ->visible(fn (Get $get) => $get('platform') === 'uber')
+                                                ->required(fn (Get $get) => $get('platform') === 'uber'),
+
+                                            TextInput::make('gross_amount')
                                                 ->label(__('common.gross'))
-                                                ->numeric()
-                                                ->default(0)
-                                                ->required()
-                                                ->prefix('€')
-                                                ->step(0.01)
-                                                ->live(debounce: '500ms')
+                                                ->numeric()->prefix('€')->default(0)->live(onBlur: true)
+                                                ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateDetailItemMetrics($set, $get)),
+
+                                            TextInput::make('cash_collected_by_driver')
+                                                ->label(__('common.bar'))
+                                                ->numeric()->prefix('€')->default(0)->live(onBlur: true)
                                                 ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateDetailItemMetrics($set, $get)),
 
                                             TextInput::make('tip')
                                                 ->label(__('common.tip'))
-                                                ->numeric()
-                                                ->default(0)
-                                                ->prefix('€')
-                                                ->step(0.01)
-                                                ->live(debounce: '500ms')
+                                                ->numeric()->prefix('€')->default(0)->live(onBlur: true)
                                                 ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateDetailItemMetrics($set, $get)),
 
-                                            TextInput::make('bar')
-                                                ->label(__('common.bar'))
-                                                ->numeric()
-                                                ->default(0)
-                                                ->prefix('€')
-                                                ->step(0.01)
-                                                ->live(debounce: '500ms')
-                                                ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateDetailItemMetrics($set, $get)),
+                                            TextInput::make('net_payout')
+                                                ->label(__('common.net'))
+                                                ->readOnly()->prefix('€')->extraInputAttributes(['class' => 'bg-gray-50']),
                                         ]),
-
-                                        // Highlight the calculated results within the repeater
-                                        Section::make('Result')
-                                            ->compact()
-                                            ->columns(2)
-                                            ->schema([
-                                                TextInput::make('net')
-                                                    ->label(__('common.net'))
-                                                    ->disabled()
-                                                    ->dehydrated()
-                                                    ->prefix('€')
-                                                    ->extraInputAttributes(['class' => 'font-bold bg-gray-50']),
-
-                                                Hidden::make('cash'),
-                                            ]),
                                     ]),
                             ]),
                     ]),
 
-                // --- RIGHT SIDE: SUMMARY (Takes up 1 of 3 columns) ---
+                // --- SAĞ TARAF: ÖZET VE HAKEDİŞ ---
                 Group::make()
                     ->columnSpan(1)
                     ->schema([
                         Section::make(__('common.summary'))
                             ->icon('heroicon-o-calculator')
-                            ->description('Real-time calculations')
                             ->schema([
-                                TextInput::make('total_income')
-                                    ->label(__('common.total_income'))
-                                    ->prefix('€')
-                                    ->numeric()
-                                    ->readOnly()
-                                    ->extraInputAttributes(['class' => 'text-right text-xl font-bold text-primary-600'])
-                                    ->columnSpanFull(),
+                                TextInput::make('taxameter_total')
+                                    ->label(__('common.taximetre_total'))
+                                    ->numeric()->prefix('€')->required()->live(onBlur: true)
+                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($get('details'), $set, $get)),
 
-                                TextInput::make('net')
-                                    ->label(__('common.net'))
-                                    ->prefix('€')
-                                    ->numeric()
-                                    ->readOnly()
-                                    ->extraInputAttributes(['class' => 'text-right text-xl font-bold text-primary-600'])
-                                    ->columnSpanFull(),
+                                TextInput::make('sumup_payments')
+                                    ->label('SumUp')
+                                    ->numeric()->prefix('€')->default(0)->live(onBlur: true)
+                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($get('details'), $set, $get)),
 
-                                Grid::make(2)
-                                    ->schema([
-                                        TextInput::make('gross')
-                                            ->label(__('common.gross'))
-                                            ->numeric()
-                                            ->prefix('€')
-                                            ->readOnly(),
+                                TextInput::make('expected_cash')
+                                    ->label(__('common.expected_cash'))
+                                    ->readOnly()->prefix('€')
+                                    ->extraInputAttributes(['class' => 'text-right text-xl font-bold text-danger-600']),
 
-                                        TextInput::make('bar')
-                                            ->label(__('common.bar'))
-                                            ->numeric()
-                                            ->prefix('€')
-                                            ->readOnly(),
+                                TextInput::make('net_salary')
+                                    ->label(__('common.driver_salary'))
+                                    ->readOnly()->prefix('€')
+                                    ->extraInputAttributes(['class' => 'font-bold text-success-600']),
 
-                                        TextInput::make('tip')
-                                            ->label(__('common.tip'))
-                                            ->numeric()
-                                            ->prefix('€')
-                                            ->readOnly(),
+                                TextInput::make('deductions_sb')
+                                    ->label(__('common.deductions_sb'))
+                                    ->numeric()->prefix('€')->default(0)->live(onBlur: true)
+                                    ->afterStateUpdated(fn (Set $set, Get $get) => self::calculateMainMetrics($get('details'), $set, $get)),
 
-                                        TextInput::make('cash')
-                                            ->label(__('common.cash'))
-                                            ->numeric()
-                                            ->prefix('€')
-                                            ->readOnly(),
-
-                                        TextInput::make('driver_salary')
-                                            ->label(__('common.driver_salary'))
-                                            ->numeric()
-                                            ->prefix('€')
-                                            ->readOnly()
-                                            ->extraInputAttributes(['class' => 'font-bold']),
-                                    ]),
                             ]),
                     ]),
             ]);
@@ -231,71 +178,27 @@ class InvoiceResource extends Resource
         return $table->columns([
             TextColumn::make('driver.first_name')
                 ->label(__('common.driver'))
-                ->formatStateUsing(fn ($record) => $record->driver->first_name . ' ' . $record->driver->last_name)
-                ->sortable()
-                ->searchable(['first_name', 'last_name']),
+                ->formatStateUsing(fn ($record) => "{$record->driver->first_name} {$record->driver->last_name}")
+                ->sortable()->searchable(),
 
-            TextColumn::make('month')
-                ->label(__('common.month'))
-                ->badge(),
-
-            TextColumn::make('total_income')
-                ->label(__('common.total_income'))
-                ->money('eur')
-                ->weight('bold')
-                ->sortable(),
+            TextColumn::make('month')->label(__('common.month'))->badge(),
+            TextColumn::make('taxameter_total')->label(__('common.taximetre_total'))->money('eur'),
+            TextColumn::make('expected_cash')->label(__('common.expected_cash'))->money('eur')->color('danger')->weight('bold'),
         ])
             ->filters([
-                Tables\Filters\SelectFilter::make('month')
-                    ->label(__('common.month'))
-                    ->options(fn () => __('common.months')),
-                Tables\Filters\SelectFilter::make('driver_id')
-                    ->label(__('common.driver'))
-                    ->relationship('driver', 'first_name'),
+                Tables\Filters\SelectFilter::make('month')->options(fn () => __('common.months')),
+                Tables\Filters\SelectFilter::make('driver_id')->relationship('driver', 'first_name'),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\ViewAction::make(),
-
-                    Tables\Actions\Action::make('export')
-                        ->label(__('common.export'))
-                        ->icon('heroicon-o-arrow-down-tray')
-                        ->color('success')
-                        ->requiresConfirmation()
-                        ->action(function ($record) {
-                            $service = app(InvoiceExportService::class);
-                            return $service->exportSingle($record->id);
-                        }),
-
                     Tables\Actions\Action::make('download_pdf')
                         ->label(__('common.download_pdf'))
                         ->icon('heroicon-o-document-arrow-down')
-                        ->color('warning')
                         ->action(fn ($record) => app(\App\Services\InvoiceExportService::class)->displaySingle($record->id)),
-
-                    Tables\Actions\Action::make('send_whatsapp')
-                        ->label('WhatsApp')
-                        ->icon('heroicon-o-chat-bubble-oval-left-ellipsis')
-                        ->color('success')
-                        ->url(fn ($record) => 'https://wa.me/?text=' . urlencode(
-                                __("common.invoice_message", [
-                                    'url' => route('invoices.pdf', ['id' => $record->id, 'view' => 'browser'])
-                                ])
-                            ))
-                        ->openUrlInNewTab(),
                 ])
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [];
     }
 
     public static function getPages(): array
@@ -308,51 +211,45 @@ class InvoiceResource extends Resource
         ];
     }
 
-    // --- LOGIC FIX: SEPARATED CALCULATIONS TO PREVENT DATA LOSS ---
-
-    /**
-     * Calculates ONLY the aggregated totals for the main invoice.
-     * Does NOT touch the details array.
-     *
-     * COMMON SCREEN CALCULATION
-     */
-    protected static function calculateMainMetrics(?array $state, Set $set): void
+    protected static function calculateMainMetrics(?array $state, Set $set, Get $get): void
     {
-        $mainInvoice = InvoiceCalculateService::calculateMain($state);
+        $taxameter = (float)($get('taxameter_total') ?? 0);
+        $sumup = (float)($get('sumup_payments') ?? 0);
+        $totalAppGross = 0;
+        $totalAppBar = 0;
 
-        $set('total_income', $mainInvoice['totalGross']);
-        $set('gross', $mainInvoice['totalGross']);
-        $set('tip', $mainInvoice['tip']);
-        $set('bar', $mainInvoice['bar']);
+        if ($state) {
+            foreach ($state as $item) {
+                $totalAppGross += (float)($item['gross_amount'] ?? 0);
+                $totalAppBar += (float)($item['cash_collected_by_driver'] ?? 0);
+            }
+        }
 
-        // RECALCULATE Cash to include Tip explicitly: Gross + Tip - Bar
-        // This ensures the summary matches the line items where $cash = $gross + $tip - $bar
-        // $calculatedCash = $mainInvoice['totalGross'] + $mainInvoice['tip'] - $mainInvoice['bar'];
+        // Kasa Kontrolü: Genel Kasa - (Uygulama Kartlı Ödemeleri) - SumUp
+        $appCardPayments = $totalAppGross - $totalAppBar;
+        $expectedCash = $taxameter - $appCardPayments - $sumup;
 
-        $set('net', $mainInvoice['net']);
-        //$set('driver_salary', $mainInvoice['driverSalary']);
-        $set('driver_salary', 0);
-        $set('cash', 0);
+        $sb = (float)($get('deductions_sb') ?? 0);
+        $percentage = (int)($get('salary_percentage') ?? 50);
+
+        // Hakediş Hesabı: (Tüm Brüt Kazançlar * Yüzde) - Kesintiler
+        $totalGrossForSalary = $taxameter + $totalAppGross;
+        $salary = ($totalGrossForSalary * ($percentage / 100)) - $sb;
+
+        $set('expected_cash', round($expectedCash, 2));
+        $set('net_salary', round($salary, 2));
     }
 
-    /**
-     * Calculates metrics ONLY for the specific item being edited.
-     */
-    protected static function calculateDetailItemMetrics(Set $set, Get $get, ?string $platform = null): void
+    protected static function calculateDetailItemMetrics(Set $set, Get $get): void
     {
-        $platform = $platform ?? $get('platform');
-        $gross = (float)($get('gross') ?? 0);
-        $tip = (float)($get('tip') ?? 0);
-        $bar = (float)($get('bar') ?? 0);
+        $platform = $get('platform');
+        $gross = (float)($get('gross_amount') ?? 0);
 
-        // Fetch config inside function to avoid dependency injection issues in static context
-        $commissionRates = config('platform');
-        $commissionRate = (float)($commissionRates[$platform]['commission'] ?? 0);
+        $rates = config('platform.commissions', [
+            'uber' => 0.25, 'bolt' => 0.20, 'freenow' => 0.15, 'bliq' => 0.15
+        ]);
 
-        $cash = $gross + $tip - $bar;
-        $net = $gross * (1 - $commissionRate);
-
-        $set('cash', 5);
-        $set('net', round($net, 2));
+        $rate = $rates[$platform] ?? 0.20;
+        $set('net_payout', round($gross * (1 - $rate), 2));
     }
 }

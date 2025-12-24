@@ -17,32 +17,54 @@ class Invoice extends Model
         'company_id',
         'driver_id',
         'vehicle_id',
-        'month',
         'year',
-        'total_income',
+        'month',
+        // Taksimetre ve Genel Toplamlar
+        'taxameter_total',
+        'sumup_payments',
+        // Maaş ve Kesinti Parametreleri
+        'salary_percentage',
+        'deductions_sb',
+        'cash_withdrawals',
+        // Hesaplanan Sonuçlar
+        'driver_salary',
+        'expected_cash',
+        // Eski alanlardan uyumlu olanlar (Opsiyonel - Migration'da varsa tutulabilir)
         'gross',
         'tip',
         'bar',
         'net',
-        'cash',
-        'driver_salary'
     ];
 
-    public function driver(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    /**
+     * Casts: Veritabanından gelen rakamların float/decimal
+     * olarak doğru işlenmesini sağlar.
+     */
+    protected $casts = [
+        'taxameter_total' => 'decimal:2',
+        'driver_salary' => 'decimal:2',
+        'expected_cash' => 'decimal:2',
+        'deductions_sb' => 'decimal:2',
+        'year' => 'integer',
+    ];
+
+    public function driver(): BelongsTo
     {
         return $this->belongsTo(Driver::class);
     }
 
-    public function vehicle(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
     }
 
-    public function details(): HasMany{
-        return  $this->hasMany(InvoiceDetail::class);
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
     }
 
-    public function company(): BelongsTo{
-        return $this->belongsTo(Company::class);
+    public function details(): HasMany
+    {
+        return $this->hasMany(InvoiceDetail::class);
     }
 }
