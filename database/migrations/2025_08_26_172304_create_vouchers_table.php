@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('driver_id')->nullable()->constrained('drivers')->nullOnDelete();
             $table->foreignId('vehicle_id')->nullable()->constrained('vehicles')->nullOnDelete();
+            $table->foreignId('invoice_id')->nullable()->constrained('vehicles')->nullOnDelete();
             $table->string('number')->unique();
             $table->string('issuer');
             $table->string('passenger_name')->nullable();

@@ -25,7 +25,7 @@ class Invoice extends Model
         // Maaş ve Kesinti Parametreleri
         'salary_percentage',
         'deductions_sb',
-        'cash_withdrawals',
+        'cash_withdrawals', // şoförün aldığu avans, maaştan önce alınan
         // Hesaplanan Sonuçlar
         'driver_salary',
         'expected_cash',
@@ -66,5 +66,10 @@ class Invoice extends Model
     public function details(): HasMany
     {
         return $this->hasMany(InvoiceDetail::class);
+    }
+
+    public function vouchers(): HasMany
+    {
+        $this->hasMany(Voucher::class);
     }
 }
