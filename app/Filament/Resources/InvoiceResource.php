@@ -158,11 +158,7 @@ class InvoiceResource extends Resource
                                     ->readOnly()->prefix('€')
                                     ->extraInputAttributes(['class' => 'text-right text-xl font-bold text-danger-600']),
                             ]),
-                    ]),
 
-                Group::make()
-                    ->columnSpan(1)
-                    ->schema([
                         Section::make(__('Sürücü Hesaplamaları'))
                             ->icon('heroicon-o-calculator')
                             ->schema([
