@@ -79,6 +79,7 @@ return [
     'expense_type' => 'Ausgabenart',
     'expense_types' => [
         'fuel' => 'Kraftstoff',
+        'cash_withdrawals' => 'Barvorschuss',
         'repair' => 'Reparatur',
         'insurance' => 'Versicherung',
         'other' => 'Andere',

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Voucher extends Model
 {
-    protected $fillable = ['driver_id', 'vehicle_id', 'number', 'issuer', 'passenger_name', 'amount', 'valid_until', 'from', 'to', 'is_paid', 'note'];
+    protected $fillable = ['driver_id', 'vehicle_id', 'invoice_id', 'number', 'issuer', 'passenger_name', 'amount', 'valid_until', 'from', 'to', 'is_paid', 'note'];
 
     public function driver()
     {

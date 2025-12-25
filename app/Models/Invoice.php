@@ -68,8 +68,13 @@ class Invoice extends Model
         return $this->hasMany(InvoiceDetail::class);
     }
 
-    public function vouchers(): HasMany
+    public function vouchers(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        $this->hasMany(Voucher::class);
+        return $this->hasMany(\App\Models\Voucher::class, 'invoice_id');
+    }
+
+    public function expenses()
+    {
+        return $this->hasMany(\App\Models\Expense::class);
     }
 }

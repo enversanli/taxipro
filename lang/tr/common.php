@@ -84,6 +84,7 @@ return [
     'expense_type' => 'Gider Türü',
     'expense_types' => [
         'fuel' => 'Yakıt',
+        'cash_withdrawals' => 'Nakit Avans',
         'repair' => 'Tamir',
         'insurance' => 'Sigorta',
         'other' => 'Diğer',
