@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Expense extends Model
 {
     protected $fillable = [
+        'company_id',
         'vehicle_id',
         'driver_id',
         'invoice_id',

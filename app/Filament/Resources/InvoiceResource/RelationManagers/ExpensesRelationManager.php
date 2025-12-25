@@ -11,7 +11,7 @@ use Filament\Tables\Table;
 class ExpensesRelationManager extends RelationManager
 {
     protected static string $relationship = 'expenses';
-
+    protected $listeners = ['refreshInvoiceForm' => '$refresh'];
     public function form(Form $form): Form
     {
         return $form
@@ -49,8 +49,8 @@ class ExpensesRelationManager extends RelationManager
                     ,
 
                     Forms\Components\RichEditor::make('note')
-                    ->label(__('common.note'))
-                    ->placeholder('Açıklayın ...'),
+                        ->label(__('common.note'))
+                        ->placeholder('Açıklayın ...'),
                 ]),
             ]);
     }
@@ -68,7 +68,7 @@ class ExpensesRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('type')
                     ->label(__('common.type'))
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'fuel' => 'success',
                         'cash_withdrawals' => 'warning',
                         'repair' => 'danger',
@@ -94,22 +94,42 @@ class ExpensesRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->modalHeading('Yeni Harcama Ekle')
-                    // Otomatik atamayı garantiye almak için driver_id'yi de faturadan çekebiliriz:
                     ->mutateFormDataUsing(function (array $data): array {
-                        $data['driver_id'] = $this->getOwnerRecord()->driver_id;
-                        $data['vehicle_id'] = $this->getOwnerRecord()->vehicle_id;
+                        $record = $this->getOwnerRecord();
+                        $data['driver_id'] = $record->driver_id;
+                        $data['vehicle_id'] = $record->vehicle_id;
+                        $data['company_id'] = $record->company_id;
                         return $data;
-                    }),
+                    })
+                    ->after(function () {
+                        $this->updateInvoiceTotals();
+                        $this->dispatch('refresh-page');
+                    })
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Tables\Actions\EditAction::make()
+                    ->after(function () {
+                        $this->updateInvoiceTotals();
+                        $this->dispatch('refresh-page');
+                    }),
+                Tables\Actions\DeleteAction::make()
+                    ->after(function () {
+                        $this->updateInvoiceTotals();
+                        $this->dispatch('refresh-page');
+                    }),
             ]);
+    }
+
+    protected function updateInvoiceTotals(): void
+    {
+        $invoice = $this->getOwnerRecord();
+
+        $totalWithdrawals = $invoice->expenses()
+            ->where('type', 'cash_withdrawals')
+            ->sum('amount');
+
+        $invoice->update([
+            'cash_withdrawals' => (float)$totalWithdrawals,
+        ]);
     }
 }

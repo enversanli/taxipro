@@ -109,11 +109,9 @@ class VouchersRelationManager extends RelationManager
     {
         $invoice = $this->getOwnerRecord();
         $totalVouchers = $invoice->vouchers()->sum('amount');
-
+        dd($totalVouchers);
         $invoice->update([
             'coupon_payments' => $totalVouchers
         ]);
-
-        // Önemli: Eğer ana formda hesaplama yapılıyorsa sayfayı yenilemek gerekebilir
     }
 }
