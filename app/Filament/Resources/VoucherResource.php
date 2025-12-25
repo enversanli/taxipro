@@ -35,6 +35,14 @@ class VoucherResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Select::make('company_id')
+                    ->label(__('common.company'))
+                    ->relationship('company', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->visible(fn () => auth()->user()->role === 'admin')
+                    ->nullable(),
+
                 Forms\Components\Select::make('driver_id')
                     ->label(__('common.driver'))
                     ->relationship('driver', 'first_name')
