@@ -90,9 +90,9 @@ class VouchersRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make()
                     ->mutateFormDataUsing(function (array $data): array {
                         $invoice = $this->getOwnerRecord();
-                        // Şoför ve Araç bilgisini ana faturadan otomatik çek
                         $data['driver_id'] = $invoice->driver_id;
                         $data['vehicle_id'] = $invoice->vehicle_id;
+                        $data['company_id'] = $invoice->company_id;
                         return $data;
                     })
                     ->after(fn () => $this->updateInvoiceTotals()),
