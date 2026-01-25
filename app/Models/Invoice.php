@@ -77,4 +77,9 @@ class Invoice extends Model
     {
         return $this->hasMany(\App\Models\Expense::class);
     }
+
+    public function trips(): HasMany
+    {
+        return $this->hasMany(Trip::class);
+    }
 }

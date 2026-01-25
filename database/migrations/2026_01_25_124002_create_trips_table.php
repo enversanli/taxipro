@@ -14,21 +14,16 @@ return new class extends Migration
         Schema::create('trips', function (Blueprint $table) {
             $table->id();
 
-            // Link to Driver (Owner of the trip)
             $table->foreignId('driver_id')->nullable()->constrained()->nullOnDelete();
-
-            // LINK TO INVOICE DETAILS (The critical new link)
-            // This allows us to say: "These 50 trips belong to that Bolt summary line."
-            $table->foreignId('invoice_detail_id')->nullable()
-                ->constrained('invoice_details')
-                ->nullOnDelete();
+            $table->foreignId('vehicle_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('invoice_id')->nullable()->constrained('invoices')->nullOnDelete();
+            $table->foreignId('invoice_detail_id')->nullable()->constrained('invoice_details')->nullOnDelete();
 
             // -- Platform Info --
             $table->string('platform')->index(); // 'bolt', 'uber'
             $table->string('external_id')->index();
 
             // -- Details --
-            $table->string('vehicle_license_plate')->nullable();
             $table->text('pickup_address')->nullable();
             $table->text('dropoff_address')->nullable();
             $table->integer('distance_meters')->default(0);
