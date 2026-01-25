@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('email')->nullable();
             $table->enum('work_model', ['taxi', 'rent'])->default('taxi');
             $table->string('provision_model')->nullable();
+            $table->string('bolt_uuid')->nullable();
+            $table->string('bolt_partner_uuid')->nullable();
             $table->timestamps();
         });
 

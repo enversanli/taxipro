@@ -15,26 +15,22 @@ return new class extends Migration
             $table->id();
             $table->foreignId('company_id')->constrained('companies')->cascadeOnDelete();
             $table->enum('brand', [
-                'Mercedes-Benz',
-                'Volkswagen',
-                'BMW',
-                'Audi',
-                'Opel',
-                'Skoda',
-                'Ford',
-                'Toyota',
-                'Renault',
-                'Hyundai',
-                'Other'
-            ]);
+                'Mercedes-Benz', 'Volkswagen', 'BMW',
+                'Audi', 'Opel', 'Skoda', 'Ford', 'Toyota',
+                'Renault', 'Hyundai', 'Other'
+            ])->default('Other');
             $table->string('license_plate')->unique();
             $table->string('model');
-            $table->enum('usage_type', ['taxi', 'rent']);
+            $table->enum('usage_type', ['taxi', 'rent'])->default('taxi');
+            $table->integer('year')->nullable();
             $table->string('color')->nullable();
             $table->string('code')->nullable();
             $table->date('tuv_date')->nullable();
             $table->date('insurance_date')->nullable();
             $table->text('notes')->nullable();
+            $table->string('bolt_uuid')->unique()->nullable();
+            $table->string('uber_uuid')->unique()->nullable();
+            $table->string('freenow_uuid')->unique()->nullable();
             $table->timestamps();
 
             $table->unique(['company_id', 'license_plate', 'code']);

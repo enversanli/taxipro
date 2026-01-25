@@ -25,6 +25,11 @@ class Vehicle extends Model
         'code',
     ];
 
+    protected $casts = [
+        'tuv_date' => 'date',
+        'insurance_date' => 'date', // Good practice to add this too
+    ];
+
     public function drivers(): BelongsToMany
     {
         return $this->belongsToMany(Driver::class);

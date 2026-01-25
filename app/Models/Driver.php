@@ -22,6 +22,8 @@ class Driver extends Model
         'address',
         'work_model',
         'provision_model',
+        'bolt_uuid',
+        'bolt_partner_uuid'
     ];
 
     public function vehicles(): BelongsToMany

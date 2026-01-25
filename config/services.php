@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'bolt' => [
+        'username' => env('BOLT_CLIENT_ID'),
+        'password' => env('BOLT_CLIENT_SECRET'),
+        'base_url' => env('BOLT_BASE_URL'),
+    ]
+
 ];
