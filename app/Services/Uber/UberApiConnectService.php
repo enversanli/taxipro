@@ -13,7 +13,7 @@ class UberApiConnectService
     {
         $redirectUri = env('UBER_REDIRECT_URI');
         $url = "https://auth.uber.com/oauth/v2/authorize?client_id=wKEBBLwhzVL78dMu6MVA_2mW11b-UqEh&redirect_uri=$redirectUri&scope=profile&response_type=code";
-        $url = "https://sandbox-login.uber.com/oauth/v2/authorize?client_id=KFWnHBQd3gBy6X5T7Nz7TbBLkAf7jldA&redirect_uri=https://166dccbe8845.ngrok-free.app/uber/redirect&scope=profile&response_type=code";
+        $url = "https://sandbox-login.uber.com/oauth/v2/authorize?client_id=KFWnHBQd3gBy6X5T7Nz7TbBLkAf7jldA&redirect_uri=$redirectUri&scope=profile&response_type=code";
         return redirect($url);
     }
 
