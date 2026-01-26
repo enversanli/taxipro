@@ -20,36 +20,7 @@ Route::get('/set-locale/{locale}', function ($locale) {
 })->name('set-locale');
 
 
-Route::get('uber/redirect', function (\Illuminate\Http\Request $request){
-    $code = $request->input('code');
-
-    if (!$code) {
-        return response()->json(['error' => 'Authorization code not provided'], 400);
-    }
-
-    // Exchange the authorization code for an access token
-    $clientId = env('UBER_CLIENT');
-    $clientSecret = env('UBER_SECRET');
-
-    $response = \Illuminate\Support\Facades\Http::asForm()->post('https://auth.uber.com/oauth/v2/token', [
-        'client_id' => $clientId,
-        'client_secret' => $clientSecret,
-        'grant_type' => 'authorization_code',
-        'redirect_uri' => 'https://101bcde16e20.ngrok-free.app/uber/redirect',
-        'code' => $code,
-    ]);
-
-    $data = $response->json();
-
-    if ($response->failed()) {
-        return response()->json([
-            'error' => 'Token request failed',
-            'details' => $data,
-        ], 400);
-    }
-
-    return response()->json($data);
-})->name('uber.redirect');
+Route::get('uber/redirect', [\App\Http\Controllers\PlatformConnectController::class, 'redirect'])->name('uber.redirect');
 
 //Route::get('uber/privacy-policy', function (){
 //    dd(123);

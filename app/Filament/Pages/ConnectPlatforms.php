@@ -122,6 +122,9 @@ class ConnectPlatforms extends Page
     /**
      * The Dynamic Action that opens the Modal
      */
+    /**
+     * The Dynamic Action that opens the Modal
+     */
     public function connectAction(): Action
     {
         return Action::make('connect')
@@ -152,8 +155,8 @@ class ConnectPlatforms extends Page
                     ->first();
 
                 if ($existing) {
-                    // Merge credentials + is_active into one array for the form
-                    $action->fill(array_merge(
+                    // FIX: Use fillForm() instead of fill()
+                    $action->fillForm(array_merge(
                         $existing->credentials ?? [],
                         ['is_active' => $existing->is_active]
                     ));
@@ -162,6 +165,31 @@ class ConnectPlatforms extends Page
             ->action(function (array $data, array $arguments) {
                 $platformId = $arguments['platform'];
                 $isActive = $data['is_active'] ?? false;
+
+                // --- NEW: UBER SERVICE INTEGRATION ---
+                if ($platformId === 'uber') {
+                    try {
+                        // Assuming you pass credentials to the constructor or the connect method
+                        // Adjust the path to your actual Service namespace
+                        $uberService = new \App\Services\Uber\UberApiConnectService();
+
+                        // We pass the NEW credentials from the form ($data) to verify them
+                        // BEFORE we save them to the database.
+                        $uberService->connect();
+
+                    } catch (\Exception $e) {
+                        // If connection fails, stop everything and show error
+                        Notification::make()
+                            ->danger()
+                            ->title('Uber Verbindung fehlgeschlagen')
+                            ->body($e->getMessage())
+                            ->send();
+
+                        // Do not save to DB if auth fails
+                        $this->halt();
+                    }
+                }
+                // -------------------------------------
 
                 // Remove non-credential fields to save clean JSON
                 unset($data['is_active']);
@@ -181,5 +209,4 @@ class ConnectPlatforms extends Page
                 Notification::make()->success()->title('Verbindung gespeichert')->send();
                 $this->refreshConnections();
             });
-    }
-}
+    }}

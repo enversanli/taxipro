@@ -32,12 +32,10 @@ class UberApiAuthService
         }
 
         // 2. Request Token
-        // Uber requires form-url-encoded body
         $response = Http::asForm()
             ->withHeaders([
                 'Accept' => 'application/json',
             ])
-            // ALWAYS use the production auth URL to get a token, even for sandbox testing
             ->post($this->authUrl, [
                 'client_id'     => $this->clientId,
                 'client_secret' => $this->clientSecret,
