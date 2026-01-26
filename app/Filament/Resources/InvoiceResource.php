@@ -7,28 +7,34 @@ use App\Filament\Resources\InvoiceResource\RelationManagers\DetailsRelationManag
 use App\Filament\Resources\InvoiceResource\RelationManagers\ExpensesRelationManager;
 use App\Filament\Resources\InvoiceResource\RelationManagers\VouchersRelationManager;
 use App\Models\Company;
+use App\Models\Driver;
 use App\Models\Invoice;
-use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Group;
-use Filament\Forms\Components\HasManyRepeater;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Set;
-use Filament\Forms\Get;
-use Filament\Forms\Components\Placeholder;
+use Illuminate\Support\HtmlString;
 
 class InvoiceResource extends Resource
 {
     protected static ?string $model = Invoice::class;
-    protected static ?string $navigationIcon = 'heroicon-o-currency-euro';
+    protected static ?string $navigationIcon = 'heroicon-o-document-currency-euro';
+    protected static ?string $activeNavigationIcon = 'heroicon-s-document-currency-euro';
+    protected static ?int $navigationSort = 1;
+
+    public static function getModelLabel(): string
+    {
+        return __('common.invoice');
+    }
 
     public static function getPluralModelLabel(): string
     {
@@ -43,242 +49,267 @@ class InvoiceResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->columns(3)
+            ->columns(12)
             ->schema([
-                // --- SOL TARAF: VERİ GİRİŞİ (REPEATER & INFO) ---
                 Group::make()
-                    ->columnSpan(2)
+                    ->columnSpan(['lg' => 8])
                     ->schema([
-                        Section::make(__('common.invoice_info'))
-                            ->icon('heroicon-o-user')
-                            ->columns(2)
+                        Section::make()
                             ->schema([
-                                auth()->user()->role === 'admin'
-                                    ? Select::make('company_id')
-                                    ->label(__('common.company'))
-                                    ->options(Company::all()->pluck('name', 'id'))
-                                    ->required()
-                                    : Hidden::make('company_id')->default(auth()->user()->company_id),
+                                Grid::make(2)->schema([
+                                    Select::make('company_id')
+                                        ->label(__('common.company'))
+                                        ->options(Company::all()->pluck('name', 'id'))
+                                        ->required()
+                                        ->native(false)
+                                        ->prefixIcon('heroicon-m-building-office')
+                                        ->visible(fn() => auth()->user()->role === 'admin')
+                                        ->default(auth()->user()->company_id),
 
-                                Select::make('driver_id')
-                                    ->label(__('common.driver'))
-                                    ->relationship('driver', 'first_name')
-                                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->first_name} {$record->last_name}")
-                                    ->required()
-                                    ->live()
-                                    ->afterStateUpdated(fn($state, Set $set) => $set('salary_percentage', \App\Models\Driver::find($state)?->default_percentage ?? 50)
-                                    ),
+                                    Hidden::make('company_id')
+                                        ->default(auth()->user()->company_id)
+                                        ->visible(fn() => auth()->user()->role !== 'admin'),
+
+                                    Select::make('driver_id')
+                                        ->label(__('common.driver'))
+                                        ->relationship('driver', 'first_name')
+                                        ->getOptionLabelFromRecordUsing(fn($record) => "{$record->first_name} {$record->last_name}")
+                                        ->searchable()
+                                        ->preload()
+                                        ->required()
+                                        ->live()
+                                        ->native(false)
+                                        ->prefixIcon('heroicon-m-user')
+                                        ->afterStateUpdated(fn($state, Set $set) => $set('salary_percentage', Driver::find($state)?->default_percentage ?? 50)),
+                                ]),
 
                                 Grid::make(2)->schema([
                                     Select::make('month')
                                         ->label(__('common.month'))
-                                        ->options(fn() => __('common.months'))
-                                        ->required(),
+                                        ->options(__('common.months'))
+                                        ->required()
+                                        ->native(false),
                                     TextInput::make('year')
                                         ->label(__('common.year'))
                                         ->default(now()->format('Y'))
+                                        ->numeric()
                                         ->required(),
                                 ]),
                             ]),
 
-                        Section::make(__('common.invoice_detail'))
-                            ->icon('heroicon-o-list-bullet')
+                        // --- 2. REVENUE (Money In) ---
+                        Section::make(__('Einnahmen & Umsatz'))
+                            ->icon('heroicon-o-banknotes')
+                            ->description('Erfassung der Taximeter- und Kartenzahlungen.')
                             ->schema([
-                                HasManyRepeater::make('details')
-                                    ->relationship('details')
-                                    ->collapsible()
-                                    ->collapsed()
-                                    ->cloneable()
-                                    ->itemLabel(fn($state) => self::getRepeaterLabel($state))
-                                    ->live()
-                                    ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateMainMetrics($set, $get))
-                                    ->schema([
-                                        Grid::make(3)->schema([
-                                            Select::make('platform')
-                                                ->label(__('common.platform'))
-                                                ->options(['uber' => 'Uber', 'bolt' => 'Bolt', 'bliq' => 'Bliq', 'freenow' => 'Free Now'])
-                                                ->required()->live()
-                                                ->afterStateUpdated(function (Set $set, Get $get) {
-                                                    if ($get('platform') !== 'uber') $set('week_number', null);
-                                                    self::calculateDetailItemMetrics($set, $get);
-                                                }),
+                                Grid::make(2)->schema([
+                                    TextInput::make('taxameter_total')
+                                        ->label(__('common.taximetre_total'))
+                                        ->numeric()
+                                        ->prefix('€')
+                                        ->required()
+                                        ->live(onBlur: true)
+                                        ->extraInputAttributes(['class' => 'text-lg'])
+                                        ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
 
-                                            Select::make('week_number')
-                                                ->label(__('common.week'))
-                                                ->options([1 => '1.Woche', 2 => '2.Woche', 3 => '3.Woche', 4 => '4.Woche', 5 => '5.Woche'])
-                                                ->visible(fn(Get $get) => $get('platform') === 'uber')
-                                                ->required(fn(Get $get) => $get('platform') === 'uber'),
+                                    TextInput::make('sumup_payments')
+                                        ->label('SumUp / Kartenzahlung')
+                                        ->numeric()
+                                        ->prefix('€')
+                                        ->default(0)
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
+                                ]),
+                            ]),
 
-                                            TextInput::make('gross_amount')
-                                                ->label(__('common.gross'))
-                                                ->numeric()->prefix('€')->default(0)->live(onBlur: true)
-                                                ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateDetailItemMetrics($set, $get)),
+                        // --- 3. DEDUCTIONS (Money Out) ---
+                        Section::make(__('Abzüge & Vorschüsse'))
+                            ->icon('heroicon-o-minus-circle')
+                            ->collapsed()
+                            ->schema([
+                                Grid::make(3)->schema([
+                                    TextInput::make('deductions_sb')
+                                        ->label('Selbstbeteiligung / Schaden')
+                                        ->numeric()
+                                        ->prefix('€')
+                                        ->default(0)
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
 
-                                            TextInput::make('cash_collected_by_driver')
-                                                ->label(__('common.bar'))
-                                                ->numeric()->prefix('€')->default(0)->live(onBlur: true)
-                                                ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateDetailItemMetrics($set, $get)),
+                                    TextInput::make('cash_withdrawals')
+                                        ->label('Barentnahme (Avans)')
+                                        ->numeric()
+                                        ->prefix('€')
+                                        ->default(0)
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
 
-                                            TextInput::make('tip')
-                                                ->label(__('common.tip'))
-                                                ->numeric()->prefix('€')->default(0)->live(onBlur: true)
-                                                ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateDetailItemMetrics($set, $get)),
-
-                                            TextInput::make('net_payout')
-                                                ->label(__('common.net'))
-                                                ->readOnly()->prefix('€')->extraInputAttributes(['class' => 'bg-gray-100']),
-                                        ]),
-                                    ]),
+                                    // Placeholder for Coupon info since we moved details to relations
+                                    Placeholder::make('info')
+                                        ->label('Hinweis')
+                                        ->content('Kupon-Details werden unten im Tab "Gutscheine" verwaltet.'),
+                                ]),
                             ]),
                     ]),
 
-                // --- SAĞ TARAF: KASA & MAAŞ HESAPLAMA ---
+                // =================================================================================================
+                // RIGHT COLUMN (Results / Dashboard) - Spans 4 of 12
+                // =================================================================================================
                 Group::make()
-                    ->columnSpan(1)
+                    ->columnSpan(['lg' => 4])
                     ->schema([
-                        Section::make(__('Kasa Kontrolü'))
-                            ->icon('heroicon-o-banknotes')
-                            ->description('Kasa ve nakit para kontrolü')
-                            ->schema([
-                                TextInput::make('taxameter_total')
-                                    ->label(__('common.taximetre_total'))
-                                    ->numeric()->prefix('€')->required()->live(onBlur: true)
-                                    ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
-
-                                TextInput::make('sumup_payments')
-                                    ->label('SumUp / Kart')
-                                    ->numeric()->prefix('€')->default(0)->live(onBlur: true)
-                                    ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
-
-                                TextInput::make('expected_cash')
-                                    ->label(__('common.expected_cash'))
-                                    ->readOnly()->prefix('€')
-                                    ->extraInputAttributes(['class' => 'text-right text-2xl font-bold text-danger-600 bg-danger-50']),
-
-
-                            ])->collapsible(),
-
-                        Section::make(__('Kuponlar'))
-                            ->icon('heroicon-o-ticket')
-                            ->description('Bu faturaya ait kupon ve cari sürüşlerin listesi')
-                            ->schema([
-                                Placeholder::make('vouchers_summary')
-                                    ->label('')
-                                    ->content(function ($record) {
-                                        if (!$record || $record->vouchers->isEmpty()) {
-                                            return __('Henüz kupon eklenmemiş.');
-                                        }
-
-                                        // Tablo başlıkları ve satırları
-                                        $rows = $record->vouchers->map(fn($v) => "
-                    <tr class='border-b border-gray-100 dark:border-gray-800'>
-                        <td class='py-2 px-1 text-sm'>#{$v->number}</td>
-                        <td class='py-2 px-1 text-sm font-medium'>{$v->issuer}</td>
-                        <td class='py-2 px-1 text-sm text-right font-mono text-primary-600 font-bold'>
-                            €" . number_format($v->amount, 2, ',', '.') . "
-                        </td>
-                    </tr>
-                ")->implode('');
-
-                                        return new \Illuminate\Support\HtmlString("
-                    <table class='w-full'>
-                        <thead>
-                            <tr class='text-left text-xs uppercase text-gray-400'>
-                                <th class='pb-2 px-1'>" . __('common.number') . "</th>
-                                <th class='pb-2 px-1'>" . __('common.issuer') . "</th>
-                                <th class='pb-2 px-1 text-right'>" . __('common.amount') . "</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {$rows}
-                        </tbody>
-                    </table>
-                ");
-                                    }),
-                            ])
-                            ->collapsed(),
-
-                        Section::make(__('Sürücü Hakediş'))
+                        Section::make('Abrechnung')
                             ->icon('heroicon-o-calculator')
-                            ->description('Şoför maaşı hesaplamaları ve kesintiler')
                             ->schema([
-                                TextInput::make('salary_percentage')->label('Yüzde (%)')->numeric()->default(50)->live(onBlur: true)
+                                // SALARY PERCENTAGE
+                                TextInput::make('salary_percentage')
+                                    ->label('Provisionssatz (%)')
+                                    ->numeric()
+                                    ->suffix('%')
+                                    ->default(50)
+                                    ->live(onBlur: true)
                                     ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
 
-                                TextInput::make('deductions_sb')->label('SB Kesintisi')->numeric()->prefix('€')->default(0)->live(onBlur: true)
-                                    ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
+                                // --- RESULT 1: NET SALARY ---
+                                Section::make()
+                                    ->extraAttributes(['class' => 'bg-green-50 border border-green-200 rounded-lg'])
+                                    ->schema([
+                                        TextInput::make('net_salary')
+                                            ->label(__('common.driver_salary'))
+                                            ->readOnly()
+                                            ->prefix('€')
+                                            ->extraInputAttributes([
+                                                'class' => 'text-right text-3xl font-black text-green-700 bg-transparent border-none shadow-none',
+                                                'style' => '--tw-ring-color: transparent;', // Removes focus ring
+                                            ]),
+                                        Placeholder::make('salary_help')
+                                            ->label('')
+                                            ->content(new HtmlString('<span class="text-xs text-green-600">Auszuzahlender Betrag an Fahrer</span>')),
+                                    ]),
 
-                                TextInput::make('cash_withdrawals')->label('Alınan Avanslar')->numeric()->prefix('€')->default(0)->live(onBlur: true)
-                                    ->afterStateUpdated(fn(Set $set, Get $get) => self::calculateMainMetrics($set, $get)),
+                                // --- RESULT 2: EXPECTED CASH ---
+                                Section::make()
+                                    ->extraAttributes(['class' => 'bg-red-50 border border-red-200 rounded-lg mt-4'])
+                                    ->schema([
+                                        TextInput::make('expected_cash')
+                                            ->label(__('common.expected_cash'))
+                                            ->readOnly()
+                                            ->prefix('€')
+                                            ->extraInputAttributes([
+                                                'class' => 'text-right text-3xl font-black text-red-700 bg-transparent border-none shadow-none',
+                                                'style' => '--tw-ring-color: transparent;',
+                                            ]),
+                                        Placeholder::make('cash_help')
+                                            ->label('')
+                                            ->content(new HtmlString('<span class="text-xs text-red-600">Bargeld, das abgegeben werden muss</span>')),
+                                    ]),
+                            ]),
 
-                                TextInput::make('net_salary')
-                                    ->label(__('common.driver_salary'))
-                                    ->readOnly()->prefix('€')
-                                    ->extraInputAttributes(['class' => 'text-right text-2xl font-bold text-success-600 bg-success-50']),
-                            ])->collapsed(),
+                        Section::make('Info')
+                            ->schema([
+                                Placeholder::make('note')
+                                    ->hiddenLabel()
+                                    ->content('Bitte speichern Sie die Rechnung, um Plattform-Details (Bolt/Uber) und Gutscheine hinzuzufügen.'),
+                            ]),
                     ]),
             ]);
     }
 
-    // --- LOGIC HELPER ---
-
-    protected static function getRepeaterLabel($state): string
-    {
-        if (!isset($state['platform'])) return __('common.detail');
-        $label = ucfirst($state['platform']);
-        if ($state['platform'] === 'uber' && !empty($state['week_number'])) {
-            $label .= " ({$state['week_number']}. Woche)";
-        }
-        return $label;
-    }
-
+    /**
+     * Live Calculation Logic.
+     * Note: Since 'details' are now in a RelationManager, we cannot calculate
+     * the App totals live here easily without saving first.
+     * This method calculates the base values available in the form.
+     */
     protected static function calculateMainMetrics(Set $set, Get $get): void
     {
         $taxameter = (float)$get('taxameter_total');
         $sumup = (float)$get('sumup_payments');
-        $coupons = (float)$get('coupon_payments');
         $withdrawals = (float)$get('cash_withdrawals');
-
-        $details = $get('details') ?? [];
-        $totalAppGross = 0;
-        $totalAppBar = 0;
-
-        foreach ($details as $item) {
-            $totalAppGross += (float)($item['gross_amount'] ?? 0);
-            $totalAppBar += (float)($item['cash_collected_by_driver'] ?? 0);
-        }
-
-        // Barbestand (Eldeki Nakit) Hesabı
-        $appDigitalPayments = $totalAppGross - $totalAppBar;
-        $expectedCash = $taxameter - $appDigitalPayments - $sumup - $coupons - $withdrawals;
-
-        // Maaş Hesabı
-        $percentage = (int)$get('salary_percentage');
         $sb = (float)$get('deductions_sb');
-        $totalGross = $taxameter + $totalAppGross;
+        $percentage = (int)$get('salary_percentage');
+
+        // Note: To get the App Totals (Uber/Bolt) live, we would need to query the DB
+        // using the record ID, but on 'Create' page the record ID is null.
+        // For now, we calculate based on Inputs + a placeholder for App data if stored in hidden fields.
+
+        // Basic Salary Calculation (Turnover * %) - SB
+        // Ideally, Turnover = Taxameter + App Gross.
+        // If you want App Gross included, you might need a hidden field 'total_app_gross' updated by the relation manager later.
+
+        $totalGross = $taxameter; // + $appGross (from DB)
+
         $salary = ($totalGross * ($percentage / 100)) - $sb;
 
-        $set('expected_cash', round($expectedCash, 2));
-        $set('net_salary', round($salary, 2));
-    }
+        // Cash Calculation
+        // Expected Cash = Taxameter - (App Digital Payments) - SumUp - Withdrawals
+        $expectedCash = $taxameter - $sumup - $withdrawals;
 
-    protected static function calculateDetailItemMetrics(Set $set, Get $get): void
-    {
-        $platform = $get('platform');
-        $gross = (float)$get('gross_amount');
-        $rates = ['uber' => 0.25, 'bolt' => 0.20, 'bliq' => 0.15, 'freenow' => 0.15];
-        $rate = $rates[$platform] ?? 0.20;
-        $set('net_payout', round($gross * (1 - $rate), 2));
+        $set('expected_cash', number_format($expectedCash, 2, '.', ''));
+        $set('net_salary', number_format($salary, 2, '.', ''));
     }
 
     public static function table(Table $table): Table
     {
-        return $table->columns([
-            TextColumn::make('driver.first_name')->label(__('common.driver'))->sortable()->searchable(),
-            TextColumn::make('month')->label(__('common.month'))->badge(),
-            TextColumn::make('expected_cash')->label(__('common.expected_cash'))->money('eur')->color('danger')->weight('bold'),
-            TextColumn::make('net_salary')->label(__('common.driver_salary'))->money('eur')->color('success'),
-        ]);
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('driver.first_name')
+                    ->label(__('common.driver'))
+                    ->formatStateUsing(fn($record) => "{$record->driver->first_name} {$record->driver->last_name}")
+                    ->description(fn($record) => $record->driver->phone)
+                    ->sortable()
+                    ->searchable()
+                    ->weight('bold'),
+
+                Tables\Columns\TextColumn::make('month')
+                    ->label(__('common.month'))
+                    ->formatStateUsing(fn($state, $record) => $state . ' / ' . $record->year)
+                    ->badge()
+                    ->color('gray'),
+
+                Tables\Columns\TextColumn::make('taxameter_total')
+                    ->label('Umsatz')
+                    ->money('EUR'),
+
+                Tables\Columns\TextColumn::make('expected_cash')
+                    ->label(__('common.expected_cash'))
+                    ->money('EUR')
+                    ->color('danger')
+                    ->weight('bold')
+                    ->alignRight(),
+
+                Tables\Columns\TextColumn::make('net_salary')
+                    ->label(__('common.driver_salary'))
+                    ->money('EUR')
+                    ->color('success')
+                    ->weight('bold')
+                    ->alignRight(),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('driver_id')
+                    ->relationship('driver', 'first_name')
+                    ->label('Fahrer'),
+                Tables\Filters\SelectFilter::make('month')
+                    ->options(__('common.months'))
+                    ->label('Monat'),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make()->iconButton(),
+                Tables\Actions\Action::make('pdf')
+                    ->icon('heroicon-o-printer')
+                    ->iconButton()
+                    ->url(fn(Invoice $record) => route('invoices.pdf', $record))
+                    ->openUrlInNewTab(),
+            ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            DetailsRelationManager::class,   // Bolt/Uber
+            VouchersRelationManager::class,  // Kuponlar
+            ExpensesRelationManager::class,  // Ausgaben
+        ];
     }
 
     public static function getPages(): array
@@ -288,14 +319,6 @@ class InvoiceResource extends Resource
             'create' => Pages\CreateDriverInvoice::route('/create'),
             'edit' => Pages\EditDriverInvoice::route('/{record}/edit'),
             'import' => Pages\ImportInvoice::route('/import-invoice'),
-        ];
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            VouchersRelationManager::class,
-            ExpensesRelationManager::class
         ];
     }
 }

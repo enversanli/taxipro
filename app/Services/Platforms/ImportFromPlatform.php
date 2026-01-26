@@ -3,6 +3,7 @@
 namespace App\Services\Platforms;
 
 use App\Services\Bolt\BoltFleetService;
+use App\Services\Uber\UberApiAuthService;
 use App\Traits\DriverTrait;
 use App\Traits\OrderTrait;
 use App\Traits\TripTrait;
@@ -24,7 +25,7 @@ class ImportFromPlatform
         // 1. Fetch
         $rawOrders = match ($platform) {
             'bolt' => $this->fetchFromBolt($startDate, $endDate),
-            'uber' => [], // Future
+            'uber' => $this->fetchFromUber($startDate, $endDate), // Future
             default => [],
         };
 
@@ -50,6 +51,15 @@ class ImportFromPlatform
 
         $response = $service->getOrders($startTs, $endTs);
         return $response['data']['orders'] ?? [];
+    }
+
+    protected function fetchFromUber($startDate, $endDate): array
+    {
+        $service = new UberApiAuthService();
+
+        $service->getToken();
+
+        return [];
     }
 
 
