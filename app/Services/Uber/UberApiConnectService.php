@@ -21,9 +21,8 @@ class UberApiConnectService
             'scope' => 'profile partner.accounts profile.mobile_number openid',
             'response_type' => 'code'
         ];
-        $url = "https://sandbox-login.uber.com/oauth/v2/authorize?" . http_build_query($params);
 
-        return redirect($url);
+        return redirect("https://sandbox-login.uber.com/oauth/v2/authorize?" . http_build_query($params));
     }
 
 
@@ -58,7 +57,7 @@ class UberApiConnectService
             return response()->json(['error' => 'Authorization code not provided'], 400);
         }
 
-        // Exchange the authorization code for an access token
+
         $clientId = env('ILKER_UBER_CLIENT');
         $clientSecret = env('ILKER_UBER_SECRET');
         $uberRedirectUri = env('ILKER_UBER_REDIRECT_URI');

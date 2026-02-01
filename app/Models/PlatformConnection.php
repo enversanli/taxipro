@@ -9,7 +9,7 @@ class PlatformConnection extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'credentials' => 'encrypted:array', // Auto-encrypts/decrypts JSON
+        'credentials' => 'encrypted:array',
         'is_active' => 'boolean',
         'last_synced_at' => 'datetime',
     ];
