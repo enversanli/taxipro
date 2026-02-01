@@ -12,8 +12,8 @@ class UberApiConnectService
     public function connect()
     {
         $redirectUri = env('UBER_REDIRECT_URI');
-        $url = "https://auth.uber.com/oauth/v2/authorize?client_id=wKEBBLwhzVL78dMu6MVA_2mW11b-UqEh&redirect_uri=$redirectUri&scope=profile&response_type=code";
-        $url = "https://sandbox-login.uber.com/oauth/v2/authorize?client_id=KFWnHBQd3gBy6X5T7Nz7TbBLkAf7jldA&redirect_uri=$redirectUri&scope=profile&response_type=code";
+        $url = "https://auth.uber.com/oauth/v2/authorize?client_id=wKEBBLwhzVL78dMu6MVA_2mW11b-UqEh&redirect_uri=$redirectUri&scope=business.receipts&response_type=code";
+        //$url = "https://sandbox-login.uber.com/oauth/v2/authorize?client_id=KFWnHBQd3gBy6X5T7Nz7TbBLkAf7jldA&redirect_uri=$redirectUri&scope=profile&response_type=code";
         return redirect($url);
     }
 
@@ -30,7 +30,9 @@ class UberApiConnectService
         $clientSecret = env('UBER_SECRET');
         $uberRedirectUri = env('UBER_REDIRECT_URI');
 
-        $response = \Illuminate\Support\Facades\Http::asForm()->post('https://sandbox-login.uber.com/oauth/v2/token', [
+        $url = 'https://sandbox-login.uber.com/oauth/v2/token';
+
+        $response = \Illuminate\Support\Facades\Http::asForm()->post($url, [
             'client_id' => $clientId,
             'client_secret' => $clientSecret,
             'grant_type' => 'authorization_code',
