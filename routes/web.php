@@ -19,6 +19,22 @@ Route::get('/set-locale/{locale}', function ($locale) {
     return redirect()->back();
 })->name('set-locale');
 
+Route::get('uber/trips', function (){
+    $accessToken = 'IA.AQAAAAX6Kl7p10RKMdfKaAHx6m23lfwtCR2yJQHtnteouQT4gYA0NQ6LXeCF_B2PetRwksjVTRnuKVyub6xFKdct5TZjqCrvKvXN6KUBmcS113TboXz7ZQjcjWXwRcJtOiPDXuaFZZUQO3c-aJRnnmo9sgZwDrHf-XLr6sgc0YY';
+
+    $response = Http::withToken($accessToken)
+        ->get('https://test-api.uber.com/v1.2/partner.accounts', [
+            'latitude' => 37.7759792,
+            'longitude' => -122.41823,
+            'scope' => 'banking.events.financial_products'
+        ]);
+
+    if ($response->successful()) {
+        return $response->json();
+    }
+    dd($response->json());
+    return $response->throw();
+});
 
 Route::get('uber/redirect', [\App\Http\Controllers\PlatformConnectController::class, 'redirect'])->name('uber.redirect');
 

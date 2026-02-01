@@ -17,8 +17,8 @@ class UberApiAuthService
 
     public function __construct()
     {
-        $this->clientId = env('UBER_CLIENT');
-        $this->clientSecret = env('UBER_SECRET');
+        $this->clientId = env('ILKER_UBER_CLIENT');
+        $this->clientSecret = env('ILKER_UBER_SECRET');
     }
 
     /**
@@ -36,12 +36,12 @@ class UberApiAuthService
             ->withHeaders([
                 'Accept' => 'application/json',
             ])
-            ->post($this->authUrl, [
+            ->post($this->sandboxUrl, [
                 'client_id'     => $this->clientId,
                 'client_secret' => $this->clientSecret,
                 'grant_type'    => 'client_credentials',
 
-                'scope'         => 'fleets.trips.read'
+                'scope'         => 'banking.events.financial_products'
             ]);
         dd(1,$response->body());
         if ($response->failed()) {

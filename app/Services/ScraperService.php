@@ -75,7 +75,7 @@ class ScraperService
         $url = 'https://fleetownerportal.live.boltsvc.net/fleetOwnerPortal/getAccessToken';
 
         $response = Http::withHeaders([
-            // Standard Headers
+
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
             'Origin' => 'https://fleets.bolt.eu',
@@ -83,17 +83,17 @@ class ScraperService
             'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
 
         ])
-// Append Query Parameters to the URL
+
             ->post($url . '?language=de-de&version=FO.3.1655&brand=bolt', [
                 'refresh_token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InR5cGUiOiJiYXNlIiwiZmxlZXRfb3duZXJfaWQiOjc2NDIxLCJqdGkiOiJmMWIzZTQ4YS1hOTVlLTRlZDctYWJhOS1kMGIxYjdjMDU0OTgifSwiaWF0IjoxNzY5NTU5MjU5LCJleHAiOjE3NzAxNjQwNTl9.gQW6ctnQ5Z8fo_gUjFv8Y9_jEIRwg-z3VJeXCnlcstU'
             ]);
         dd($response->body());
         if ($response->successful()) {
-            $token = $response->json(); // or $response->json('accessToken');
+            $token = $response->json();
             return $token;
         }
 
-        return $response->body(); // For debugging errors
+        return $response->body();
     }
 
     private function requestByToken()

@@ -16,10 +16,14 @@ return new class extends Migration
             $table->foreignId('company_id')->nullable(); // If you have multi-tenancy
             $table->string('platform')->index();
 
+            $table->text('client_id')->nullable();
+            $table->text('client_secret')->nullable();
             $table->text('credentials')->nullable();
+            $table->text('access_token')->nullable();
 
             $table->boolean('is_active')->default(false);
             $table->timestamp('last_synced_at')->nullable();
+            $table->json('data')->nullable();
             $table->timestamps();
 
             $table->unique(['company_id', 'platform']);
