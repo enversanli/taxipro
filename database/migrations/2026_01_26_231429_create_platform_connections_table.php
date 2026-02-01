@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('client_secret')->nullable();
             $table->text('credentials')->nullable();
             $table->text('access_token')->nullable();
+            $table->text('refresh_token')->nullable();
 
             $table->boolean('is_active')->default(false);
             $table->timestamp('last_synced_at')->nullable();
