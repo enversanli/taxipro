@@ -17,7 +17,7 @@
 <header class="bg-white shadow-sm sticky top-0 z-50">
     <div class="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
         <div class="font-bold text-xl tracking-tight text-blue-900">
-            FleetSync<span class="text-blue-500">.io</span>
+            TaxiPro<span class="text-blue-500">.de</span>
         </div>
         <nav class="hidden md:flex space-x-6 text-sm font-medium text-gray-500">
             <a href="#" class="hover:text-blue-600 transition">Home</a>
