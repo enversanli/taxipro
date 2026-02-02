@@ -62,7 +62,6 @@ class UberApiConnectService
             ], 400);
         }
 
-        dd(Auth::user());
         $platform = PlatformConnection::updateOrCreate([
             'company_id' => auth()->user()->company_id ?? 1,
             'platform' => 'uber',
