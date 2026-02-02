@@ -60,7 +60,7 @@ class UberApiConnectService
                 'details' => $data,
             ], 400);
         }
-
+        dd($data);
         $platform = PlatformConnection::updateOrCreate([
             'company_id' => auth()->user()->company_id,
             'platform' => 'uber',
