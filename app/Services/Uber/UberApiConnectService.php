@@ -53,7 +53,7 @@ class UberApiConnectService
         ]);
 
         $data = $response->json();
-        dd($data);
+
         if ($response->failed()) {
             return response()->json([
                 'error' => 'Token request failed',
@@ -67,6 +67,7 @@ class UberApiConnectService
         ], [
             'access_token' => $data['access_token'],
             'refresh_token' => $data['refresh_token'],
+            'expires_at' => now()->addSeconds($data['expires_at']),
         ]);
         dd($platform);
 
