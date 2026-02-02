@@ -62,13 +62,14 @@ class UberApiConnectService
         }
 
         $platform = PlatformConnection::updateOrCreate([
-            'company_id' => auth()->user()->company_id,
+            'company_id' => auth()->user()->company_id ?? 1,
             'platform' => 'uber',
         ], [
             'access_token' => $data['access_token'],
             'refresh_token' => $data['refresh_token'],
             'expires_at' => now()->addSeconds($data['expires_in']),
         ]);
+
         dd($platform);
 
         return response()->json($data);
