@@ -60,14 +60,14 @@ class UberApiConnectService
                 'details' => $data,
             ], 400);
         }
-        dd($data);
+
         $platform = PlatformConnection::updateOrCreate([
             'company_id' => auth()->user()->company_id,
             'platform' => 'uber',
         ], [
             'access_token' => $data['access_token'],
             'refresh_token' => $data['refresh_token'],
-            'expires_at' => now()->addSeconds($data['expires_at']),
+            'expires_at' => now()->addSeconds($data['expires_in']),
         ]);
         dd($platform);
 
