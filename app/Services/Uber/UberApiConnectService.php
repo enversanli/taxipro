@@ -2,6 +2,7 @@
 
 namespace App\Services\Uber;
 use App\Models\PlatformConnection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 class UberApiConnectService
 {
@@ -61,6 +62,7 @@ class UberApiConnectService
             ], 400);
         }
 
+        dd(Auth::user());
         $platform = PlatformConnection::updateOrCreate([
             'company_id' => auth()->user()->company_id ?? 1,
             'platform' => 'uber',
