@@ -62,6 +62,7 @@ class UberApiConnectService
             ], 400);
         }
 
+        // TODO : Company id must be corrected, here it takes always 1
         $platform = PlatformConnection::updateOrCreate([
             'company_id' => auth()->user()->company_id ?? 1,
             'platform' => 'uber',
@@ -71,7 +72,6 @@ class UberApiConnectService
             'expires_at' => now()->addSeconds($data['expires_in']),
         ]);
 
-        dd($platform);
 
         return response()->json($data);
     }
