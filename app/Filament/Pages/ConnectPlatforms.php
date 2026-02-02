@@ -157,7 +157,7 @@ class ConnectPlatforms extends Page
                 if ($existing) {
                     // FIX: Use fillForm() instead of fill()
                     $action->fillForm(array_merge(
-                        $existing->credentials ?? [],
+                        $existing->is_active ?? [],
                         ['is_active' => $existing->is_active]
                     ));
                 }
@@ -200,7 +200,6 @@ class ConnectPlatforms extends Page
                         'platform' => $platformId
                     ],
                     [
-                        'credentials' => $data,
                         'is_active' => $isActive,
                         'last_synced_at' => now(),
                     ]
