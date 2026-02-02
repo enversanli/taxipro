@@ -20,19 +20,18 @@ Route::get('/set-locale/{locale}', function ($locale) {
 })->name('set-locale');
 
 Route::get('uber/trips', function (){
-    $accessToken = 'IA.AQAAAAX6Kl7p10RKMdfKaAHx6m23lfwtCR2yJQHtnteouQT4gYA0NQ6LXeCF_B2PetRwksjVTRnuKVyub6xFKdct5TZjqCrvKvXN6KUBmcS113TboXz7ZQjcjWXwRcJtOiPDXuaFZZUQO3c-aJRnnmo9sgZwDrHf-XLr6sgc0YY';
+    $accessToken = 'IA.AQAAAAVmY6uSp44RY9vs4GRoRRoVSm26HjCqgzRdlivFD-U2G9EjwhuYsN_9BqEd5KSzMCZeLCRp3Lc0nSHvZxYtIJkFToXisnTpkqCMKhPZrwld4Nm8uY-ABF9n7QPsgm3S6AQrayWLsEfwFIe3Jf4ULkkDrbzEroPIgvW6azA';
 
     $response = Http::withToken($accessToken)
-        ->get('https://test-api.uber.com/v1.2/partner.accounts', [
+        ->get('https://test-api.uber.com/v1.2/history', [
             'latitude' => 37.7759792,
             'longitude' => -122.41823,
-            'scope' => 'banking.events.financial_products'
         ]);
 
+    dd($response->dd());
     if ($response->successful()) {
         return $response->json();
     }
-    dd($response->json());
     return $response->throw();
 });
 

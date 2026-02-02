@@ -15,22 +15,25 @@ class UberApiConnectService
     public function connect()
     {
         $params = [
-            'client_id' => env('ILKER_UBER_CLIENT'),
-            'redirect_uri' => env('ILKER_UBER_REDIRECT_URI'),
-            // Note the spaces between scopes here
-            'scope' => 'profile partner.accounts profile.mobile_number openid',
+            'client_id' => env('UBER_CLIENT'),
+            'redirect_uri' => env('UBER_REDIRECT_URI'),
+            'scope' => 'profile profile.mobile_number partner.accounts',
             'response_type' => 'code'
         ];
 
-        return redirect("https://sandbox-login.uber.com/oauth/v2/authorize?" . http_build_query($params));
+// 1. Use auth.uber.com (Production)
+// 2. Use PHP_QUERY_RFC3986 to turn spaces into %20 instead of +
+        $url = "https://sandbox-login.uber.com/oauth/v2/authorize?" . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+
+        return redirect($url);
     }
 
 
     public function connectClient()
     {
         $response = Http::asForm()->post('https://sandbox-login.uber.com/oauth/v2/token', [
-            'client_id' => env('ILKER_UBER_CLIENT'),
-            'client_secret' => env('ILKER_UBER_SECRET'),
+            'client_id' => env('UBER_CLIENT'),
+            'client_secret' => env('UBER_SECRET'),
             'grant_type' => 'client_credentials',
             'scope' => 'profile',
         ]);
@@ -58,9 +61,9 @@ class UberApiConnectService
         }
 
 
-        $clientId = env('ILKER_UBER_CLIENT');
-        $clientSecret = env('ILKER_UBER_SECRET');
-        $uberRedirectUri = env('ILKER_UBER_REDIRECT_URI');
+        $clientId = env('UBER_CLIENT');
+        $clientSecret = env('UBER_SECRET');
+        $uberRedirectUri = env('UBER_REDIRECT_URI');
 
         $url = 'https://sandbox-login.uber.com/oauth/v2/token';
 
@@ -73,7 +76,7 @@ class UberApiConnectService
         ]);
 
         $data = $response->json();
-
+        dd($data);
         if ($response->failed()) {
             return response()->json([
                 'error' => 'Token request failed',
@@ -81,14 +84,14 @@ class UberApiConnectService
             ], 400);
         }
 
-        PlatformConnection::updateOrCreate([
+        $platform = PlatformConnection::updateOrCreate([
             'company_id' => auth()->user()->company_id,
             'platform' => 'uber',
         ], [
            'access_token' => $data['access_token'],
            'refresh_token' => $data['refresh_token'],
         ]);
-
+        dd($platform);
 
         return response()->json($data);
     }

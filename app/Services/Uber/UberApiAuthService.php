@@ -17,8 +17,8 @@ class UberApiAuthService
 
     public function __construct()
     {
-        $this->clientId = env('ILKER_UBER_CLIENT');
-        $this->clientSecret = env('ILKER_UBER_SECRET');
+        $this->clientId = env('UBER_CLIENT');
+        $this->clientSecret = env('UBER_SECRET');
     }
 
     /**
