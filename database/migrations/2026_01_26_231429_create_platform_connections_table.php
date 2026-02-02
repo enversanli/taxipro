@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('platform')->index();
             $table->string('platform_user_id')->nullable()->index();
 
-            $table->text('access_token');
+            $table->text('access_token')->nullable();
             $table->text('refresh_token')->nullable();
 
             $table->timestamp('expires_at')->nullable();
