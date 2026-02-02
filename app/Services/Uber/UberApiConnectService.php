@@ -21,35 +21,12 @@ class UberApiConnectService
             'response_type' => 'code'
         ];
 
-// 1. Use auth.uber.com (Production)
-// 2. Use PHP_QUERY_RFC3986 to turn spaces into %20 instead of +
         $url = "https://sandbox-login.uber.com/oauth/v2/authorize?" . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
 
         return redirect($url);
     }
 
 
-    public function connectClient()
-    {
-        $response = Http::asForm()->post('https://sandbox-login.uber.com/oauth/v2/token', [
-            'client_id' => env('UBER_CLIENT'),
-            'client_secret' => env('UBER_SECRET'),
-            'grant_type' => 'client_credentials',
-            'scope' => 'profile',
-        ]);
-
-        // Check if the request was successful
-        if ($response->successful()) {
-            $data = $response->json();
-            dd($data);
-            return $data['access_token'];
-        }
-
-        // Handle errors (e.g., log them)
-        return $response->throw();
-    }
-
-    // CEvap geldiğinde /uber/redirect çağırılıyor
     public function completeConnect(\Illuminate\Http\Request $request)
     {
 
@@ -88,11 +65,35 @@ class UberApiConnectService
             'company_id' => auth()->user()->company_id,
             'platform' => 'uber',
         ], [
-           'access_token' => $data['access_token'],
-           'refresh_token' => $data['refresh_token'],
+            'access_token' => $data['access_token'],
+            'refresh_token' => $data['refresh_token'],
         ]);
         dd($platform);
 
         return response()->json($data);
     }
+
+
+    public function connectClient()
+    {
+        $response = Http::asForm()->post('https://sandbox-login.uber.com/oauth/v2/token', [
+            'client_id' => env('UBER_CLIENT'),
+            'client_secret' => env('UBER_SECRET'),
+            'grant_type' => 'client_credentials',
+            'scope' => 'profile',
+        ]);
+
+        // Check if the request was successful
+        if ($response->successful()) {
+            $data = $response->json();
+            dd($data);
+            return $data['access_token'];
+        }
+
+        // Handle errors (e.g., log them)
+        return $response->throw();
+    }
+
+    // CEvap geldiğinde /uber/redirect çağırılıyor
+
 }

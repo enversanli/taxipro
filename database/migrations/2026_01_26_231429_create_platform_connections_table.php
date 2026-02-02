@@ -6,34 +6,32 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('platform_connections', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('company_id')->nullable(); // If you have multi-tenancy
-            $table->string('platform')->index();
 
-            $table->text('client_id')->nullable();
-            $table->text('client_secret')->nullable();
-            $table->text('credentials')->nullable();
-            $table->text('access_token')->nullable();
+            $table->foreignId('company_id')->constrained()->onDelete('cascade');
+
+            $table->string('platform')->index();
+            $table->string('platform_user_id')->nullable()->index();
+
+            $table->text('access_token');
             $table->text('refresh_token')->nullable();
 
-            $table->boolean('is_active')->default(false);
+            $table->timestamp('expires_at')->nullable();
+
+            $table->boolean('is_active')->default(true);
             $table->timestamp('last_synced_at')->nullable();
-            $table->json('data')->nullable();
+
+            $table->json('meta_data')->nullable();
+
             $table->timestamps();
 
             $table->unique(['company_id', 'platform']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('platform_connections');
